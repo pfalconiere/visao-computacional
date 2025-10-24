@@ -40,8 +40,31 @@
         .subtitle {
             text-align: center;
             color: #666;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             font-size: 1.1em;
+        }
+
+        .api-status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .api-status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .api-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .api-status.checking {
+            background: #fff3cd;
+            color: #856404;
         }
 
         .upload-area {
@@ -277,6 +300,17 @@
             background: #7f8c8d;
         }
 
+        .github-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .github-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
@@ -296,6 +330,10 @@
     <div class="container">
         <h1>📄 Classificador de Documentos</h1>
         <p class="subtitle">Identifique se um documento é um Advertisement ou Scientific Article</p>
+
+        <div class="api-status checking" id="apiStatus">
+            🔄 Verificando conexão com API...
+        </div>
 
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📁</div>
@@ -349,10 +387,19 @@
         </div>
 
         <div class="error" id="error"></div>
+
+        <div class="github-link">
+            <a href="https://github.com/pfalconiere/visao-computacional" target="_blank">
+                ⭐ Ver código no GitHub
+            </a>
+        </div>
     </div>
 
     <script>
-        const API_URL = 'http://localhost:5000/classify';
+        // Detectar ambiente e definir URL da API
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : 'https://visao-computacional-api.onrender.com'; // VOCÊ VAI ATUALIZAR ESSA URL!
         
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
@@ -364,8 +411,31 @@
         const loading = document.getElementById('loading');
         const result = document.getElementById('result');
         const error = document.getElementById('error');
+        const apiStatus = document.getElementById('apiStatus');
         
         let selectedFile = null;
+
+        // Verificar status da API
+        async function checkAPIStatus() {
+            try {
+                const response = await fetch(`${API_URL}/health`, { timeout: 5000 });
+                if (response.ok) {
+                    apiStatus.className = 'api-status online';
+                    apiStatus.textContent = '✅ API Online e funcionando!';
+                    return true;
+                } else {
+                    throw new Error('API offline');
+                }
+            } catch (err) {
+                apiStatus.className = 'api-status offline';
+                apiStatus.textContent = '❌ API offline. Aguarde o deploy inicializar (~1 min) ou rode localmente.';
+                return false;
+            }
+        }
+
+        // Verificar status ao carregar
+        checkAPIStatus();
+        setInterval(checkAPIStatus, 30000); // Verificar a cada 30s
 
         // Click para upload
         uploadArea.addEventListener('click', () => fileInput.click());
@@ -394,6 +464,13 @@
         });
 
         function handleFile(file) {
+            // Verificar extensão
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext !== 'tif' && ext !== 'tiff') {
+                showError('Por favor, selecione apenas arquivos .tif ou .tiff');
+                return;
+            }
+
             selectedFile = file;
             
             // Mostrar preview
@@ -428,7 +505,7 @@
             formData.append('image', selectedFile);
 
             try {
-                const response = await fetch(API_URL, {
+                const response = await fetch(`${API_URL}/classify`, {
                     method: 'POST',
                     body: formData
                 });
@@ -443,7 +520,7 @@
                 }
             } catch (err) {
                 loading.style.display = 'none';
-                showError('Erro ao conectar com a API. Certifique-se que está rodando em http://localhost:5000');
+                showError('Erro ao conectar com a API. Verifique se está online ou rode localmente.');
                 classifyBtn.disabled = false;
             }
         });
