@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classificador de Documentos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            background: #eef2ff;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e0e7ff;
+            border-color: #4c1d95;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            color: #667eea;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .preview-container {
+            display: none;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .file-info {
+            margin-top: 15px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 30px;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.advertisement {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border: 3px solid #fdcb6e;
+        }
+
+        .result.scientific_article {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            border: 3px solid #0984e3;
+        }
+
+        .result-icon {
+            font-size: 4em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .result-title {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .result-confidence {
+            text-align: center;
+            font-size: 1.3em;
+            color: #555;
+            margin-bottom: 25px;
+        }
+
+        .result-details {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .detail-value {
+            color: #666;
+        }
+
+        .characteristics {
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .characteristics h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .characteristics ul {
+            list-style: none;
+        }
+
+        .characteristics li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #555;
+        }
+
+        .characteristics li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .error {
+            background: #ff7675;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            margin-top: 20px;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .upload-area {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Classificador de Documentos</h1>
+        <p class="subtitle">Identifique se um documento é um Advertisement ou Scientific Article</p>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Clique ou arraste uma imagem aqui</div>
+            <div class="upload-hint">Formatos suportados: TIF, TIFF (apenas)</div>
+            <input type="file" id="fileInput" accept=".tif,.tiff">
+        </div>
+
+        <div class="preview-container" id="previewContainer">
+            <img id="preview" src="" alt="Preview">
+            <div class="file-info" id="fileInfo"></div>
+        </div>
+
+        <button class="btn" id="classifyBtn" disabled>Classificar Documento</button>
+        <button class="btn btn-secondary" id="newBtn" style="display: none;">Classificar Outro Documento</button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analisando documento...</p>
+        </div>
+
+        <div class="result" id="result">
+            <div class="result-icon" id="resultIcon"></div>
+            <div class="result-title" id="resultTitle"></div>
+            <div class="result-confidence" id="resultConfidence"></div>
+            
+            <div class="result-details">
+                <div class="detail-item">
+                    <span class="detail-label">Score:</span>
+                    <span class="detail-value" id="score"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Altura Média:</span>
+                    <span class="detail-value" id="altura"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Desvio de Altura:</span>
+                    <span class="detail-value" id="desvio"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Densidade de Texto:</span>
+                    <span class="detail-value" id="densidade"></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Componentes:</span>
+                    <span class="detail-value" id="componentes"></span>
+                </div>
+            </div>
+
+            <div class="characteristics" id="characteristics"></div>
+        </div>
+
+        <div class="error" id="error"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/classify';
+        
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const preview = document.getElementById('preview');
+        const fileInfo = document.getElementById('fileInfo');
+        const classifyBtn = document.getElementById('classifyBtn');
+        const newBtn = document.getElementById('newBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        const error = document.getElementById('error');
+        
+        let selectedFile = null;
+
+        // Click para upload
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        // Seleção de arquivo
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        function handleFile(file) {
+            selectedFile = file;
+            
+            // Mostrar preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                preview.src = e.target.result;
+                previewContainer.style.display = 'block';
+                fileInfo.textContent = `${file.name} (${formatFileSize(file.size)})`;
+                classifyBtn.disabled = false;
+                result.style.display = 'none';
+                error.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Classificar
+        classifyBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            error.style.display = 'none';
+            classifyBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                loading.style.display = 'none';
+
+                if (response.ok && data.success) {
+                    showResult(data);
+                } else {
+                    showError(data.error || 'Erro ao classificar imagem');
+                }
+            } catch (err) {
+                loading.style.display = 'none';
+                showError('Erro ao conectar com a API. Certifique-se que está rodando em http://localhost:5000');
+                classifyBtn.disabled = false;
+            }
+        });
+
+        function showResult(data) {
+            const isAd = data.classification === 'advertisement';
+            
+            result.className = 'result ' + data.classification;
+            result.style.display = 'block';
+            
+            document.getElementById('resultIcon').textContent = isAd ? '📰' : '📚';
+            document.getElementById('resultTitle').textContent = isAd ? 'Advertisement' : 'Scientific Article';
+            document.getElementById('resultConfidence').textContent = 
+                `Confiança: ${(data.confidence * 100).toFixed(1)}% (${data.interpretation.confidence_level})`;
+            
+            document.getElementById('score').textContent = data.score;
+            document.getElementById('altura').textContent = data.features.altura_media.toFixed(1) + ' px';
+            document.getElementById('desvio').textContent = data.features.desvio_altura.toFixed(1);
+            document.getElementById('densidade').textContent = data.features.densidade_texto.toFixed(3);
+            document.getElementById('componentes').textContent = data.features.num_componentes;
+            
+            // Características
+            const charDiv = document.getElementById('characteristics');
+            if (data.interpretation.characteristics.length > 0) {
+                charDiv.innerHTML = '<h3>💡 Características Identificadas:</h3><ul>' +
+                    data.interpretation.characteristics.map(c => `<li>${c}</li>`).join('') +
+                    '</ul>';
+            } else {
+                charDiv.innerHTML = '';
+            }
+            
+            newBtn.style.display = 'block';
+        }
+
+        function showError(message) {
+            error.textContent = '❌ ' + message;
+            error.style.display = 'block';
+        }
+
+        // Novo documento
+        newBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            previewContainer.style.display = 'none';
+            result.style.display = 'none';
+            error.style.display = 'none';
+            classifyBtn.disabled = true;
+            newBtn.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
