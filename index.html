@@ -195,11 +195,46 @@
             gap: 24px;
         }
 
-        .preview-image {
-            max-width: 100%;
-            max-height: 500px;
+        .file-preview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 60px 80px;
             border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            min-width: 400px;
+        }
+
+        .file-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        }
+
+        .file-name {
+            font-size: 19px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 8px;
+            word-break: break-word;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .file-size {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .file-format {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: white;
+            margin-top: 12px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
         }
 
         .classify-button {
@@ -359,6 +394,11 @@
             .features-grid {
                 grid-template-columns: 1fr;
             }
+
+            .file-preview {
+                min-width: auto;
+                padding: 40px 30px;
+            }
         }
     </style>
 </head>
@@ -392,9 +432,14 @@
         </div>
 
         <div class="preview-section" id="preview-section">
-            <h2 class="preview-title" id="preview-title">Preview da imagem</h2>
+            <h2 class="preview-title" id="preview-title">Arquivo pronto para classificar</h2>
             <div class="preview-container">
-                <img id="preview-image" class="preview-image" alt="Preview">
+                <div class="file-preview">
+                    <div class="file-icon">🖼️</div>
+                    <div class="file-name" id="file-name">document.tif</div>
+                    <div class="file-size" id="file-size">0 KB</div>
+                    <div class="file-format">TIFF IMAGE</div>
+                </div>
                 <button class="classify-button" id="classify-button" onclick="classifyImage()">Classificar documento</button>
             </div>
         </div>
@@ -433,21 +478,21 @@
                 heroSubtitle: 'Diferencie advertisements de scientific articles com IA',
                 uploadText: 'Arraste uma imagem .tif ou clique para selecionar',
                 uploadButton: 'Escolher arquivo',
-                previewTitle: 'Preview da imagem',
+                previewTitle: 'Arquivo pronto para classificar',
                 classifyButton: 'Classificar documento',
                 loadingText: 'Analisando documento...',
                 newButton: 'Nova classificação',
                 advertisement: 'Advertisement',
                 scientificArticle: 'Artigo Científico',
                 features: {
-                    altura_media: 'Altura Média',
-                    largura_media: 'Largura Média',
-                    desvio_altura: 'Desvio Altura',
-                    aspect_ratio: 'Aspect Ratio',
-                    colunas_detectadas: 'Colunas',
-                    densidade_texto: 'Densidade',
-                    num_componentes: 'Componentes',
-                    transicoes_layout: 'Transições'
+                    avg_component_height: 'Altura Média',
+                    avg_component_width: 'Largura Média',
+                    height_std: 'Desvio Altura',
+                    avg_aspect_ratio: 'Aspect Ratio',
+                    num_columns_detected: 'Colunas',
+                    text_density: 'Densidade',
+                    num_text_components: 'Componentes',
+                    layout_transitions: 'Transições'
                 },
                 errorTiff: 'Por favor, selecione um arquivo .tif ou .tiff',
                 errorClassify: 'Erro ao classificar. Tente novamente.'
@@ -457,21 +502,21 @@
                 heroSubtitle: 'Differentiate advertisements from scientific articles with AI',
                 uploadText: 'Drag a .tif image or click to select',
                 uploadButton: 'Choose file',
-                previewTitle: 'Image preview',
+                previewTitle: 'Ready to classify',
                 classifyButton: 'Classify document',
                 loadingText: 'Analyzing document...',
                 newButton: 'New classification',
                 advertisement: 'Advertisement',
                 scientificArticle: 'Scientific Article',
                 features: {
-                    altura_media: 'Average Height',
-                    largura_media: 'Average Width',
-                    desvio_altura: 'Height Deviation',
-                    aspect_ratio: 'Aspect Ratio',
-                    colunas_detectadas: 'Columns',
-                    densidade_texto: 'Density',
-                    num_componentes: 'Components',
-                    transicoes_layout: 'Transitions'
+                    avg_component_height: 'Average Height',
+                    avg_component_width: 'Average Width',
+                    height_std: 'Height Deviation',
+                    avg_aspect_ratio: 'Aspect Ratio',
+                    num_columns_detected: 'Columns',
+                    text_density: 'Density',
+                    num_text_components: 'Components',
+                    layout_transitions: 'Transitions'
                 },
                 errorTiff: 'Please select a .tif or .tiff file',
                 errorClassify: 'Classification error. Please try again.'
@@ -547,14 +592,13 @@
             currentFile = file;
             hideError();
 
-            // Show preview
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('preview-image').src = e.target.result;
-                document.getElementById('upload-section').style.display = 'none';
-                document.getElementById('preview-section').classList.add('show');
-            };
-            reader.readAsDataURL(file);
+            // Show file info instead of preview (browsers don't support .tif natively)
+            const fileSize = (file.size / 1024).toFixed(2);
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-size').textContent = fileSize + ' KB';
+            
+            document.getElementById('upload-section').style.display = 'none';
+            document.getElementById('preview-section').classList.add('show');
         }
 
         async function classifyImage() {
@@ -597,24 +641,26 @@
             document.getElementById('result-icon').textContent = isAd ? '📰' : '📚';
             document.getElementById('result-label').textContent = isAd ? t.advertisement : t.scientificArticle;
 
-            // Features
+            // Features from extra_features
             const featuresGrid = document.getElementById('features-grid');
             featuresGrid.innerHTML = '';
 
+            const extraFeatures = data.extra_features || {};
             const features = data.features || {};
+            
             const featureMap = {
-                'altura_media': features.altura_media,
-                'largura_media': features.largura_media,
-                'desvio_altura': features.desvio_altura,
-                'aspect_ratio': features.aspect_ratio,
-                'densidade_texto': features.densidade_texto,
-                'num_componentes': features.num_componentes,
-                'transicoes_layout': features.transicoes_layout,
-                'colunas_detectadas': features.colunas_detectadas
+                'avg_component_height': extraFeatures.avg_component_height,
+                'avg_component_width': extraFeatures.avg_component_width,
+                'height_std': extraFeatures.height_std,
+                'avg_aspect_ratio': extraFeatures.avg_aspect_ratio,
+                'text_density': features.text_density,
+                'num_text_components': features.num_text_components,
+                'layout_transitions': features.layout_transitions,
+                'num_columns_detected': extraFeatures.num_columns_detected
             };
 
             Object.entries(featureMap).forEach(([key, value]) => {
-                if (value !== undefined) {
+                if (value !== undefined && value !== null) {
                     const card = document.createElement('div');
                     card.className = 'feature-card';
                     
