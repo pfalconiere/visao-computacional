@@ -885,6 +885,45 @@
                 featuresGrid.appendChild(paragraphDiv);
             }
 
+            // Mostrar análise de texto (apenas para artigos científicos)
+            if (!isAd && data.word_count !== undefined) {
+                const wordCountDiv = document.createElement('div');
+                wordCountDiv.className = 'paragraph-count';
+                const complianceIcon = data.is_compliant ? '✅' : '❌';
+                const complianceText = data.is_compliant ? 
+                    (currentLang === 'pt' ? 'CONFORME' : 'COMPLIANT') : 
+                    (currentLang === 'pt' ? 'NÃO CONFORME' : 'NOT COMPLIANT');
+                wordCountDiv.innerHTML = `<strong>${currentLang === 'pt' ? 'Palavras' : 'Words'}:</strong> ${data.word_count} ${complianceIcon} ${complianceText}`;
+                featuresGrid.appendChild(wordCountDiv);
+            }
+
+            // Mostrar top palavras frequentes (apenas para artigos científicos)
+            if (!isAd && data.frequent_words && data.frequent_words.length > 0) {
+                const wordsTitle = document.createElement('div');
+                wordsTitle.className = 'paragraph-count';
+                wordsTitle.style.marginTop = '16px';
+                wordsTitle.innerHTML = `<strong>${currentLang === 'pt' ? 'Palavras mais frequentes:' : 'Most frequent words:'}</strong>`;
+                featuresGrid.appendChild(wordsTitle);
+
+                const wordsGrid = document.createElement('div');
+                wordsGrid.style.display = 'grid';
+                wordsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                wordsGrid.style.gap = '8px';
+                wordsGrid.style.fontSize = '14px';
+                wordsGrid.style.marginTop = '8px';
+
+                data.frequent_words.slice(0, 10).forEach(item => {
+                    const wordItem = document.createElement('div');
+                    wordItem.style.padding = '6px 12px';
+                    wordItem.style.background = '#f5f5f7';
+                    wordItem.style.borderRadius = '8px';
+                    wordItem.innerHTML = `${item.word}: <strong>${item.count}</strong>`;
+                    wordsGrid.appendChild(wordItem);
+                });
+
+                featuresGrid.appendChild(wordsGrid);
+            }
+
             // Reset feedback section
             document.getElementById('feedback-buttons').style.display = 'flex';
             document.getElementById('feedback-success').style.display = 'none';
