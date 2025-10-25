@@ -1,0 +1,23 @@
+--- index.html.old
++++ index.html
+@@ -800,6 +800,9 @@
+         async function classifyDocument() {
+             if (!currentFile) return;
+             
++            // Timeout aumentado para 120 segundos (Render pode levar até 60s para acordar)
++            const controller = new AbortController();
++            const timeoutId = setTimeout(() => controller.abort(), 120000);
++            
+             showLoading(true);
+             feedbackSent = false;
+             
+@@ -811,7 +814,8 @@
+                 const response = await fetch(`${API_URL}/classify`, {
+                     method: 'POST',
+-                    body: formData
++                    body: formData,
++                    signal: controller.signal
+                 });
+             
++                clearTimeout(timeoutId);
+                 const result = await response.json();

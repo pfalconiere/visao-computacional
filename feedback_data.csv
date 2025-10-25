@@ -1,3 +1,8 @@
 timestamp,image_name,predicted_class,is_correct,correct_class
 2025-10-25 10:39:15,PUBLICATIONS056448-6.tif,scientific_article,true,scientific_article
 2025-10-25 10:40:05,PUBLICATIONS055842-5.tif,scientific_article,true,scientific_article
+2025-10-25 13:45:54,PUBLICATIONS056134-6.tif,scientific_article,false,advertisement
+2025-10-25 13:50:08,PUBLICATIONS045235-5.tif,scientific_article,false,advertisement
+2025-10-25 13:56:50,PUBLICATIONS059230-9.tif,advertisement,false,scientific_article
+2025-10-25 13:56:58,PUBLICATIONS059230-9.tif,advertisement,false,scientific_article
+2025-10-25 13:57:16,CTRSP-FILES025206-52.tif,advertisement,false,scientific_article

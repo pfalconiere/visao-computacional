@@ -1,13 +1,25 @@
 #!/usr/bin/env python3
 """
-Classificador Final - Otimizado
+Classificador Final - Otimizado com Detecção de Parágrafos
 Baseado no treinamento completo do RVL-CDIP
 Acurácia: 89.87% (Ads: 90.46%, Articles: 89.30%)
-Otimizado com 12+ milhões de iterações
+Otimizado com 12+ milhões de iterações + Feature de Linhas
 """
 
 import cv2
 import numpy as np
+import os
+import sys
+
+# Importar detector de parágrafos
+try:
+    from paragraph_detector import ParagraphDetector
+except ImportError:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        from paragraph_detector import ParagraphDetector
+    except:
+        ParagraphDetector = None
 
 class ClassificadorFinal:
     """
@@ -22,7 +34,8 @@ class ClassificadorFinal:
             'altura_max': 13.412157638433888,
             'desvio_altura': 12.445331918061154,
             'densidade_texto': 0.4033884980057474,
-            'num_componentes': 454
+            'num_componentes': 454,
+            'num_linhas': 30.93  # Novo threshold otimizado
         }
         
         # Pesos otimizados das regras
@@ -30,8 +43,15 @@ class ClassificadorFinal:
             'p1': 2.577449845562375,
             'p2': 1.6107505780934257,
             'p3': 0.7373781260674225,
-            'p4': 0.6455914619059228
+            'p4': 0.6455914619059228,
+            'p5': 2.42  # Peso da feature de linhas
         }
+        
+        # Detector de parágrafos
+        if ParagraphDetector:
+            self.paragraph_detector = ParagraphDetector()
+        else:
+            self.paragraph_detector = None
         
         # Estatísticas do modelo
         self.accuracy = 0.8987
@@ -149,16 +169,41 @@ class ClassificadorFinal:
         features, extra_features = self.extract_features(image_path)
         score = self.calculate_score(features, extra_features)
         
+        # Detectar parágrafos e linhas (nova feature)
+        num_lines = 0
+        num_paragraphs = 0
+        if self.paragraph_detector:
+            try:
+                para_stats = self.paragraph_detector.analyze(image_path)
+                num_lines = para_stats['num_lines']
+                num_paragraphs = para_stats['num_paragraphs']
+                
+                # Regra 5: Número de linhas
+                if num_lines < self.thresholds['num_linhas']:
+                    score += self.pesos['p5']  # Advertisement
+                else:
+                    score -= self.pesos['p5']  # Scientific Article
+            except:
+                pass
+        
         classification = 'advertisement' if score > 0 else 'scientific_article'
         confidence = min(abs(score) / 10.0, 1.0)
         
-        return {
+        result = {
             'classification': classification,
             'score': float(score),
             'confidence': float(confidence),
             'features': features,
             'extra_features': extra_features
         }
+        
+        # Adicionar número de linhas e parágrafos ao resultado
+        if num_lines > 0:
+            result['num_lines'] = num_lines
+        if num_paragraphs > 0:
+            result['num_paragraphs'] = num_paragraphs
+        
+        return result
 
 if __name__ == '__main__':
     import sys
@@ -178,3 +223,7 @@ if __name__ == '__main__':
     print(f"  Desvio altura: {result['extra_features']['height_std']:.2f}")
     print(f"  Densidade: {result['features']['text_density']:.3f}")
     print(f"  Componentes: {result['features']['num_text_components']}")
+    if 'num_lines' in result:
+        print(f"  Linhas: {result['num_lines']}")
+    if 'num_paragraphs' in result:
+        print(f"  Parágrafos: {result['num_paragraphs']}")

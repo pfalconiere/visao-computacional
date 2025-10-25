@@ -172,6 +172,12 @@ def classify():
             }
         }
         
+        # Adicionar número de linhas e parágrafos se disponível
+        if 'num_lines' in result:
+            response['num_lines'] = int(result['num_lines'])
+        if 'num_paragraphs' in result:
+            response['num_paragraphs'] = int(result['num_paragraphs'])
+        
         # Garantir que tudo é serializável
         response = convert_numpy_types(response)
         

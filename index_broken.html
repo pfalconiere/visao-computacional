@@ -650,7 +650,6 @@
                     num_columns_detected: 'Colunas',
                     text_density: 'Densidade',
                     num_text_components: 'Componentes',
-                    num_paragraphs: 'Parágrafos',
                     layout_transitions: 'Transições'
                 },
                 errorTiff: 'Por favor, selecione um arquivo .tif ou .tiff',
@@ -681,7 +680,6 @@
                     num_columns_detected: 'Columns',
                     text_density: 'Density',
                     num_text_components: 'Components',
-                    num_paragraphs: 'Paragraphs',
                     layout_transitions: 'Transitions'
                 },
                 errorTiff: 'Please select a .tif or .tiff file',
@@ -856,11 +854,6 @@
                 'layout_transitions': features.layout_transitions,
                 'num_columns_detected': extraFeatures.num_columns_detected
             };
-            
-            // Adicionar parágrafos se for artigo científico
-            if (!isAd && data.num_paragraphs !== undefined) {
-                featureMap['num_paragraphs'] = data.num_paragraphs;
-            }
 
             Object.entries(featureMap).forEach(([key, value]) => {
                 if (value !== undefined && value !== null) {
@@ -884,11 +877,19 @@
             // Reset feedback section
             document.getElementById('feedback-buttons').style.display = 'flex';
             document.getElementById('feedback-success').style.display = 'none';
-
             
             // Re-enable feedback buttons
             const buttons = document.querySelectorAll('.feedback-btn');
             buttons.forEach(btn => btn.disabled = false);
+            
+            // Re-enable feedback buttons
+            const buttons = document.querySelectorAll('.feedback-btn');
+            buttons.forEach(btn => btn.disabled = false);
+
+            document.getElementById('result-section').classList.add('show');
+            document.getElementById('feedback-buttons').style.display = 'flex';
+            document.getElementById('feedback-success').style.display = 'none';
+
             document.getElementById('result-section').classList.add('show');
         }
 
