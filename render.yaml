@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: visao-computacional-api
-    env: docker
-    dockerfilePath: ./Dockerfile
-    plan: free
