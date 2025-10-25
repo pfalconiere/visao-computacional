@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document Classifier</title>
+    <script src="https://cdn.jsdelivr.net/npm/tiff.js@latest/tiff.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -195,46 +196,35 @@
             gap: 24px;
         }
 
-        .file-preview {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 60px 80px;
+        .preview-image-container {
+            width: 100%;
+            max-width: 600px;
+            background: #f5f5f7;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            text-align: center;
-            min-width: 400px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
-        .file-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+        .preview-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .file-info {
+            text-align: center;
+            margin-top: 12px;
         }
 
         .file-name {
-            font-size: 19px;
-            font-weight: 600;
-            color: white;
-            margin-bottom: 8px;
-            word-break: break-word;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-size: 15px;
+            color: #6e6e73;
+            margin-bottom: 4px;
         }
 
         .file-size {
-            font-size: 15px;
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-        }
-
-        .file-format {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 6px 16px;
-            border-radius: 20px;
             font-size: 13px;
-            color: white;
-            margin-top: 12px;
-            font-weight: 600;
-            letter-spacing: 0.05em;
+            color: #86868b;
         }
 
         .classify-button {
@@ -375,6 +365,14 @@
             display: block;
         }
 
+        /* Converting indicator */
+        .converting {
+            text-align: center;
+            padding: 20px;
+            color: #6e6e73;
+            font-size: 15px;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .hero h1 {
@@ -393,11 +391,6 @@
 
             .features-grid {
                 grid-template-columns: 1fr;
-            }
-
-            .file-preview {
-                min-width: auto;
-                padding: 40px 30px;
             }
         }
     </style>
@@ -432,13 +425,15 @@
         </div>
 
         <div class="preview-section" id="preview-section">
-            <h2 class="preview-title" id="preview-title">Arquivo pronto para classificar</h2>
+            <h2 class="preview-title" id="preview-title">Preview</h2>
             <div class="preview-container">
-                <div class="file-preview">
-                    <div class="file-icon">🖼️</div>
+                <div class="converting" id="converting" style="display: none;">Processando imagem...</div>
+                <div class="preview-image-container" id="preview-image-container">
+                    <img id="preview-image" class="preview-image" alt="Preview">
+                </div>
+                <div class="file-info">
                     <div class="file-name" id="file-name">document.tif</div>
                     <div class="file-size" id="file-size">0 KB</div>
-                    <div class="file-format">TIFF IMAGE</div>
                 </div>
                 <button class="classify-button" id="classify-button" onclick="classifyImage()">Classificar documento</button>
             </div>
@@ -478,9 +473,10 @@
                 heroSubtitle: 'Diferencie advertisements de scientific articles com IA',
                 uploadText: 'Arraste uma imagem .tif ou clique para selecionar',
                 uploadButton: 'Escolher arquivo',
-                previewTitle: 'Arquivo pronto para classificar',
+                previewTitle: 'Preview',
                 classifyButton: 'Classificar documento',
                 loadingText: 'Analisando documento...',
+                convertingText: 'Processando imagem...',
                 newButton: 'Nova classificação',
                 advertisement: 'Advertisement',
                 scientificArticle: 'Artigo Científico',
@@ -495,16 +491,18 @@
                     layout_transitions: 'Transições'
                 },
                 errorTiff: 'Por favor, selecione um arquivo .tif ou .tiff',
-                errorClassify: 'Erro ao classificar. Tente novamente.'
+                errorClassify: 'Erro ao classificar. Tente novamente.',
+                errorConvert: 'Erro ao processar imagem. Mostrando informações do arquivo.'
             },
             en: {
                 heroTitle: 'Classify documents',
                 heroSubtitle: 'Differentiate advertisements from scientific articles with AI',
                 uploadText: 'Drag a .tif image or click to select',
                 uploadButton: 'Choose file',
-                previewTitle: 'Ready to classify',
+                previewTitle: 'Preview',
                 classifyButton: 'Classify document',
                 loadingText: 'Analyzing document...',
+                convertingText: 'Processing image...',
                 newButton: 'New classification',
                 advertisement: 'Advertisement',
                 scientificArticle: 'Scientific Article',
@@ -519,7 +517,8 @@
                     layout_transitions: 'Transitions'
                 },
                 errorTiff: 'Please select a .tif or .tiff file',
-                errorClassify: 'Classification error. Please try again.'
+                errorClassify: 'Classification error. Please try again.',
+                errorConvert: 'Error processing image. Showing file information.'
             }
         };
 
@@ -539,6 +538,7 @@
             document.getElementById('preview-title').textContent = t.previewTitle;
             document.getElementById('classify-button').textContent = t.classifyButton;
             document.getElementById('loading-text').textContent = t.loadingText;
+            document.getElementById('converting').textContent = t.convertingText;
             document.getElementById('new-button').textContent = t.newButton;
         }
 
@@ -583,7 +583,7 @@
             }
         }
 
-        function handleFile(file) {
+        async function handleFile(file) {
             if (!file.name.toLowerCase().endsWith('.tif') && !file.name.toLowerCase().endsWith('.tiff')) {
                 showError(translations[currentLang].errorTiff);
                 return;
@@ -592,13 +592,36 @@
             currentFile = file;
             hideError();
 
-            // Show file info instead of preview (browsers don't support .tif natively)
+            // Show file info
             const fileSize = (file.size / 1024).toFixed(2);
             document.getElementById('file-name').textContent = file.name;
             document.getElementById('file-size').textContent = fileSize + ' KB';
             
             document.getElementById('upload-section').style.display = 'none';
             document.getElementById('preview-section').classList.add('show');
+            document.getElementById('converting').style.display = 'block';
+            document.getElementById('preview-image-container').style.display = 'none';
+
+            // Try to convert TIFF to viewable format
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const tiff = new Tiff({buffer: arrayBuffer});
+                const canvas = tiff.toCanvas();
+                
+                if (canvas) {
+                    // Convert canvas to data URL (JPEG)
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                    document.getElementById('preview-image').src = dataUrl;
+                    document.getElementById('preview-image-container').style.display = 'block';
+                }
+            } catch (error) {
+                console.log('Could not convert TIFF, showing placeholder:', error);
+                // If conversion fails, just show a placeholder
+                document.getElementById('preview-image').src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"%3E%3Crect width="600" height="400" fill="%23f5f5f7"/%3E%3Ctext x="50%25" y="50%25" font-family="system-ui" font-size="48" fill="%236e6e73" text-anchor="middle" dominant-baseline="middle"%3E🖼️%3C/text%3E%3Ctext x="50%25" y="65%25" font-family="system-ui" font-size="16" fill="%2386868b" text-anchor="middle" dominant-baseline="middle"%3ETIFF Document%3C/text%3E%3C/svg%3E';
+                document.getElementById('preview-image-container').style.display = 'block';
+            } finally {
+                document.getElementById('converting').style.display = 'none';
+            }
         }
 
         async function classifyImage() {
