@@ -315,9 +315,9 @@
         .result-type {
             text-align: center;
             margin-bottom: 24px;
-            padding: 24px;
-            background: #f5f5f7;
-            border-radius: 12px;
+            padding: 0 0 24px 0;
+            background: transparent;
+            border-bottom: 1px solid #e5e5e7;
         }
 
         .result-icon {
@@ -358,12 +358,35 @@
             color: #1d1d1f;
         }
 
+        .explanation-text {
+            background: transparent;
+            padding: 0;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #1d1d1f;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .paragraph-count {
+            background: transparent;
+            padding: 0;
+            margin-top: 12px;
+            font-size: 15px;
+            color: #1d1d1f;
+            text-align: left;
+        }
+
+        .paragraph-count strong {
+            font-weight: 600;
+        }
+
         /* Feedback Section */
         .feedback-section {
-            background: #f5f5f7;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
+            background: transparent;
+            padding: 24px 0;
+            margin-top: 32px;
+            border-top: 1px solid #e5e5e7;
         }
 
         .feedback-title {
@@ -586,7 +609,7 @@
 
                 <div class="result-classification">
                     <div class="result-type">
-                        <div class="result-icon" id="result-icon">📰</div>
+                        <div class="result-icon" id="result-icon"></div>
                         <h2 class="result-label" id="result-label">Advertisement</h2>
                     </div>
 
@@ -597,10 +620,10 @@
                         <div class="feedback-title" id="feedback-title">Esta classificação está correta?</div>
                         <div class="feedback-buttons" id="feedback-buttons">
                             <button class="feedback-btn feedback-btn-correct" onclick="sendFeedback(true)">
-                                ✓ Correto
+                                Correto
                             </button>
                             <button class="feedback-btn feedback-btn-incorrect" onclick="sendFeedback(false)">
-                                ✗ Incorreto
+                                Incorreto
                             </button>
                         </div>
                         <div class="feedback-success" id="feedback-success" style="display: none;"></div>
@@ -638,11 +661,12 @@
                 newButton: 'Nova classificação',
                 resultPreviewTitle: 'Documento analisado',
                 feedbackTitle: 'Esta classificação está correta?',
-                feedbackCorrect: '✓ Correto',
-                feedbackIncorrect: '✗ Incorreto',
+                feedbackCorrect: 'Correto',
+                feedbackIncorrect: 'Incorreto',
                 feedbackSuccess: '✓ Obrigado pelo feedback!',
                 advertisement: 'Advertisement',
                 scientificArticle: 'Artigo Científico',
+                paragraphs: 'Parágrafos',
                 features: {
                     avg_component_height: 'Altura Média',
                     avg_component_width: 'Largura Média',
@@ -674,6 +698,7 @@
                 feedbackSuccess: '✓ Thanks for your feedback!',
                 advertisement: 'Advertisement',
                 scientificArticle: 'Scientific Article',
+                paragraphs: 'Paragraphs',
                 features: {
                     avg_component_height: 'Average Height',
                     avg_component_width: 'Average Width',
@@ -838,49 +863,27 @@
             document.getElementById('result-file-name').textContent = currentFile.name;
             document.getElementById('result-file-size').textContent = (currentFile.size / 1024).toFixed(2) + ' KB';
 
-            document.getElementById('result-icon').textContent = isAd ? '📰' : '📚';
+            document.getElementById('result-icon').textContent = '';
             document.getElementById('result-label').textContent = isAd ? t.advertisement : t.scientificArticle;
 
             const featuresGrid = document.getElementById('features-grid');
             featuresGrid.innerHTML = '';
 
-            const extraFeatures = data.extra_features || {};
-            const features = data.features || {};
-            
-            const featureMap = {
-                'avg_component_height': extraFeatures.avg_component_height,
-                'avg_component_width': extraFeatures.avg_component_width,
-                'height_std': extraFeatures.height_std,
-                'avg_aspect_ratio': extraFeatures.avg_aspect_ratio,
-                'text_density': features.text_density,
-                'num_text_components': features.num_text_components,
-                'layout_transitions': features.layout_transitions,
-                'num_columns_detected': extraFeatures.num_columns_detected
-            };
-            
-            // Adicionar parágrafos se for artigo científico
-            if (!isAd && data.num_paragraphs !== undefined) {
-                featureMap['num_paragraphs'] = data.num_paragraphs;
+            // Mostrar explicação textual
+            if (data.explanation) {
+                const explanationDiv = document.createElement('div');
+                explanationDiv.className = 'explanation-text';
+                explanationDiv.textContent = data.explanation;
+                featuresGrid.appendChild(explanationDiv);
             }
 
-            Object.entries(featureMap).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
-                    const card = document.createElement('div');
-                    card.className = 'feature-card';
-                    
-                    const name = document.createElement('div');
-                    name.className = 'feature-name';
-                    name.textContent = t.features[key] || key;
-                    
-                    const val = document.createElement('div');
-                    val.className = 'feature-value';
-                    val.textContent = typeof value === 'number' ? value.toFixed(2) : value;
-                    
-                    card.appendChild(name);
-                    card.appendChild(val);
-                    featuresGrid.appendChild(card);
-                }
-            });
+            // Mostrar parágrafos apenas para artigos científicos
+            if (!isAd && data.num_paragraphs !== undefined) {
+                const paragraphDiv = document.createElement('div');
+                paragraphDiv.className = 'paragraph-count';
+                paragraphDiv.innerHTML = `<strong>${t.paragraphs}:</strong> ${data.num_paragraphs}`;
+                featuresGrid.appendChild(paragraphDiv);
+            }
 
             // Reset feedback section
             document.getElementById('feedback-buttons').style.display = 'flex';
