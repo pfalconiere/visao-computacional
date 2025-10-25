@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Classifier</title>
+    <title>Document Classifier - With Feedback</title>
     <script src="https://cdn.jsdelivr.net/npm/tiff.js@latest/tiff.min.js"></script>
     <style>
         * {
@@ -24,7 +24,6 @@
             flex-direction: column;
         }
 
-        /* Header */
         header {
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: saturate(180%) blur(20px);
@@ -51,7 +50,6 @@
             color: #1d1d1f;
         }
 
-        /* Language Toggle */
         .lang-toggle {
             display: flex;
             align-items: center;
@@ -77,7 +75,6 @@
             color: #0071e3;
         }
 
-        /* Main Content */
         main {
             flex: 1;
             max-width: 1200px;
@@ -107,7 +104,6 @@
             color: #6e6e73;
         }
 
-        /* Upload Section */
         .upload-section {
             background: white;
             border-radius: 18px;
@@ -168,7 +164,6 @@
             display: none;
         }
 
-        /* Preview Section */
         .preview-section {
             display: none;
             background: white;
@@ -248,7 +243,6 @@
             cursor: not-allowed;
         }
 
-        /* Result Section */
         .result-section {
             display: none;
             background: white;
@@ -265,7 +259,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 40px;
-            margin-bottom: 40px;
+            margin-bottom: 32px;
             align-items: start;
         }
 
@@ -340,7 +334,7 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
 
         .feature-card {
@@ -363,6 +357,74 @@
             color: #1d1d1f;
         }
 
+        /* Feedback Section */
+        .feedback-section {
+            background: #f5f5f7;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .feedback-title {
+            font-size: 17px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #1d1d1f;
+        }
+
+        .feedback-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .feedback-btn {
+            flex: 1;
+            padding: 12px 24px;
+            border-radius: 980px;
+            font-size: 15px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .feedback-btn-correct {
+            background: #34c759;
+            color: white;
+        }
+
+        .feedback-btn-correct:hover {
+            background: #2fb350;
+        }
+
+        .feedback-btn-incorrect {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .feedback-btn-incorrect:hover {
+            background: #e6352a;
+        }
+
+        .feedback-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .feedback-success {
+            text-align: center;
+            color: #34c759;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 12px;
+        }
+
         .new-classification {
             text-align: center;
         }
@@ -383,7 +445,6 @@
             color: white;
         }
 
-        /* Loading */
         .loading {
             display: none;
             text-align: center;
@@ -409,7 +470,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Error */
         .error {
             display: none;
             background: #fff3cd;
@@ -424,7 +484,6 @@
             display: block;
         }
 
-        /* Converting indicator */
         .converting {
             text-align: center;
             padding: 20px;
@@ -432,7 +491,6 @@
             font-size: 15px;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .hero h1 {
                 font-size: 40px;
@@ -455,6 +513,10 @@
 
             .features-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .feedback-buttons {
+                flex-direction: column;
             }
         }
     </style>
@@ -510,7 +572,6 @@
 
         <div class="result-section" id="result-section">
             <div class="result-layout">
-                <!-- Preview on the left -->
                 <div class="result-preview">
                     <h3 class="result-preview-title" id="result-preview-title">Documento analisado</h3>
                     <div class="result-preview-image">
@@ -522,15 +583,26 @@
                     </div>
                 </div>
 
-                <!-- Classification on the right -->
                 <div class="result-classification">
                     <div class="result-type">
                         <div class="result-icon" id="result-icon">📰</div>
                         <h2 class="result-label" id="result-label">Advertisement</h2>
                     </div>
 
-                    <div class="features-grid" id="features-grid">
-                        <!-- Features will be inserted here -->
+                    <div class="features-grid" id="features-grid"></div>
+
+                    <!-- FEEDBACK SECTION -->
+                    <div class="feedback-section" id="feedback-section">
+                        <div class="feedback-title" id="feedback-title">Esta classificação está correta?</div>
+                        <div class="feedback-buttons" id="feedback-buttons">
+                            <button class="feedback-btn feedback-btn-correct" onclick="sendFeedback(true)">
+                                ✓ Correto
+                            </button>
+                            <button class="feedback-btn feedback-btn-incorrect" onclick="sendFeedback(false)">
+                                ✗ Incorreto
+                            </button>
+                        </div>
+                        <div class="feedback-success" id="feedback-success" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -545,6 +617,9 @@
         let currentLang = 'pt';
         let currentFile = null;
         let currentPreviewUrl = null;
+        let currentClassification = null;
+        let feedbackSent = false;
+        
         const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:5000'
             : 'https://visao-computacional.onrender.com';
@@ -561,6 +636,10 @@
                 convertingText: 'Processando imagem...',
                 newButton: 'Nova classificação',
                 resultPreviewTitle: 'Documento analisado',
+                feedbackTitle: 'Esta classificação está correta?',
+                feedbackCorrect: '✓ Correto',
+                feedbackIncorrect: '✗ Incorreto',
+                feedbackSuccess: '✓ Obrigado pelo feedback!',
                 advertisement: 'Advertisement',
                 scientificArticle: 'Artigo Científico',
                 features: {
@@ -574,8 +653,7 @@
                     layout_transitions: 'Transições'
                 },
                 errorTiff: 'Por favor, selecione um arquivo .tif ou .tiff',
-                errorClassify: 'Erro ao classificar. Tente novamente.',
-                errorConvert: 'Erro ao processar imagem. Mostrando informações do arquivo.'
+                errorClassify: 'Erro ao classificar. Tente novamente.'
             },
             en: {
                 heroTitle: 'Classify documents',
@@ -588,6 +666,10 @@
                 convertingText: 'Processing image...',
                 newButton: 'New classification',
                 resultPreviewTitle: 'Analyzed document',
+                feedbackTitle: 'Is this classification correct?',
+                feedbackCorrect: '✓ Correct',
+                feedbackIncorrect: '✗ Incorrect',
+                feedbackSuccess: '✓ Thanks for your feedback!',
                 advertisement: 'Advertisement',
                 scientificArticle: 'Scientific Article',
                 features: {
@@ -601,8 +683,7 @@
                     layout_transitions: 'Transitions'
                 },
                 errorTiff: 'Please select a .tif or .tiff file',
-                errorClassify: 'Classification error. Please try again.',
-                errorConvert: 'Error processing image. Showing file information.'
+                errorClassify: 'Classification error. Please try again.'
             }
         };
 
@@ -625,9 +706,13 @@
             document.getElementById('converting').textContent = t.convertingText;
             document.getElementById('new-button').textContent = t.newButton;
             document.getElementById('result-preview-title').textContent = t.resultPreviewTitle;
+            document.getElementById('feedback-title').textContent = t.feedbackTitle;
+            
+            const buttons = document.querySelectorAll('.feedback-btn');
+            if (buttons[0]) buttons[0].innerHTML = t.feedbackCorrect;
+            if (buttons[1]) buttons[1].innerHTML = t.feedbackIncorrect;
         }
 
-        // Drag and drop
         const uploadArea = document.getElementById('upload-area');
         
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -677,7 +762,6 @@
             currentFile = file;
             hideError();
 
-            // Show file info
             const fileSize = (file.size / 1024).toFixed(2);
             document.getElementById('file-name').textContent = file.name;
             document.getElementById('file-size').textContent = fileSize + ' KB';
@@ -687,22 +771,19 @@
             document.getElementById('converting').style.display = 'block';
             document.getElementById('preview-image-container').style.display = 'none';
 
-            // Try to convert TIFF to viewable format
             try {
                 const arrayBuffer = await file.arrayBuffer();
                 const tiff = new Tiff({buffer: arrayBuffer});
                 const canvas = tiff.toCanvas();
                 
                 if (canvas) {
-                    // Convert canvas to data URL (JPEG)
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
                     currentPreviewUrl = dataUrl;
                     document.getElementById('preview-image').src = dataUrl;
                     document.getElementById('preview-image-container').style.display = 'block';
                 }
             } catch (error) {
-                console.log('Could not convert TIFF, showing placeholder:', error);
-                // If conversion fails, show placeholder
+                console.log('Could not convert TIFF:', error);
                 const placeholderUrl = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"%3E%3Crect width="600" height="400" fill="%23f5f5f7"/%3E%3Ctext x="50%25" y="50%25" font-family="system-ui" font-size="48" fill="%236e6e73" text-anchor="middle" dominant-baseline="middle"%3E🖼️%3C/text%3E%3Ctext x="50%25" y="65%25" font-family="system-ui" font-size="16" fill="%2386868b" text-anchor="middle" dominant-baseline="middle"%3ETIFF Document%3C/text%3E%3C/svg%3E';
                 currentPreviewUrl = placeholderUrl;
                 document.getElementById('preview-image').src = placeholderUrl;
@@ -731,6 +812,8 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    currentClassification = data;
+                    feedbackSent = false;
                     displayResult(data);
                 } else {
                     throw new Error(data.error || 'Classification failed');
@@ -748,16 +831,13 @@
             const t = translations[currentLang];
             const isAd = data.classification === 'advertisement';
 
-            // Show preview in result
             document.getElementById('result-preview-img').src = currentPreviewUrl || document.getElementById('preview-image').src;
             document.getElementById('result-file-name').textContent = currentFile.name;
             document.getElementById('result-file-size').textContent = (currentFile.size / 1024).toFixed(2) + ' KB';
 
-            // Icon and label
             document.getElementById('result-icon').textContent = isAd ? '📰' : '📚';
             document.getElementById('result-label').textContent = isAd ? t.advertisement : t.scientificArticle;
 
-            // Features from extra_features
             const featuresGrid = document.getElementById('features-grid');
             featuresGrid.innerHTML = '';
 
@@ -794,12 +874,57 @@
                 }
             });
 
+            // Reset feedback section
+            document.getElementById('feedback-buttons').style.display = 'flex';
+            document.getElementById('feedback-success').style.display = 'none';
+
             document.getElementById('result-section').classList.add('show');
+        }
+
+        async function sendFeedback(isCorrect) {
+            if (feedbackSent) return;
+            
+            const t = translations[currentLang];
+            const buttons = document.querySelectorAll('.feedback-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
+            try {
+                const correctClass = isCorrect ? currentClassification.classification : 
+                                   (currentClassification.classification === 'advertisement' ? 'scientific_article' : 'advertisement');
+
+                const response = await fetch(`${API_URL}/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        image_name: currentFile.name,
+                        predicted_class: currentClassification.classification,
+                        is_correct: isCorrect.toString(),
+                        correct_class: correctClass
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    feedbackSent = true;
+                    document.getElementById('feedback-buttons').style.display = 'none';
+                    document.getElementById('feedback-success').textContent = t.feedbackSuccess;
+                    document.getElementById('feedback-success').style.display = 'block';
+                    console.log(`✓ Feedback enviado! Total: ${data.total_feedbacks}`);
+                }
+            } catch (error) {
+                console.error('Erro ao enviar feedback:', error);
+                buttons.forEach(btn => btn.disabled = false);
+            }
         }
 
         function resetClassifier() {
             currentFile = null;
             currentPreviewUrl = null;
+            currentClassification = null;
+            feedbackSent = false;
             document.getElementById('file-input').value = '';
             document.getElementById('result-section').classList.remove('show');
             document.getElementById('preview-section').classList.remove('show');
