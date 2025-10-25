@@ -543,16 +543,204 @@
                 flex-direction: column;
             }
         }
+    
+        .config-section {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .config-title {
+            font-size: 19px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1d1d1f;
+        }
+
+        .config-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .config-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .config-field label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6e6e73;
+        }
+
+        .config-field input {
+            padding: 10px 12px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        .config-field input:focus {
+            outline: none;
+            border-color: #0071e3;
+        }
+
+        .word-list {
+            list-style: disc;
+            padding-left: 20px;
+            margin: 12px 0;
+            text-align: left;
+            column-count: 1;
+            column-gap: 20px;
+        }
+
+        .word-list li {
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #1d1d1f;
+        }
+
+        @media (min-width: 768px) {
+            .word-list.multi-column {
+                column-count: 2;
+            }
+        }
+
+    
+        .rule-button {
+            padding: 6px 16px;
+            background: #1d1d1f;
+            color: white;
+            border: none;
+            border-radius: 980px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .rule-button:hover {
+            background: #424245;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 18px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #1d1d1f;
+        }
+
+        .modal-field {
+            margin-bottom: 20px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6e6e73;
+            margin-bottom: 8px;
+        }
+
+        .modal-field input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .modal-field input:focus {
+            outline: none;
+            border-color: #0071e3;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 980px;
+            font-size: 15px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn-cancel {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e8e8ed;
+        }
+
+        .modal-btn-confirm {
+            background: #1d1d1f;
+            color: white;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #424245;
+        }
+
     </style>
 </head>
 <body>
     <header>
         <div class="header-content">
             <div class="logo">Document Classifier</div>
-            <div class="lang-toggle" onclick="toggleLanguage()">
-                <span id="lang-pt" class="active">PT</span>
-                <span>|</span>
-                <span id="lang-en">EN</span>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <button class="rule-button" id="rule-button" onclick="openRuleModal()">
+                    <span id="rule-btn-text">Alterar Regra</span>
+                </button>
+                <div class="lang-toggle" onclick="toggleLanguage()">
+                    <span id="lang-pt" class="active">PT</span>
+                    <span>|</span>
+                    <span id="lang-en">EN</span>
+                </div>
             </div>
         </div>
     </header>
@@ -561,6 +749,7 @@
         <div class="hero">
             <h1 id="hero-title">Classifique documentos</h1>
             <p id="hero-subtitle">Diferencie advertisements de scientific articles com IA</p>
+        </div>
         </div>
 
         <div class="error" id="error"></div>
@@ -642,7 +831,11 @@
         let currentFile = null;
         let currentPreviewUrl = null;
         let currentClassification = null;
+        let currentFullResult = null;
         let feedbackSent = false;
+        let ruleConfigured = false;
+        let minWords = 2000;
+        let minParagraphs = 8;
         
         const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:5000'
@@ -679,6 +872,17 @@
                     layout_transitions: 'Transições'
                 },
                 errorTiff: 'Por favor, selecione um arquivo .tif ou .tiff',
+                                
+                changeRule: 'Alterar Regra',
+                modalTitle: 'Configurar Regras de Conformidade',
+                modalLabelWords: 'Mínimo de Palavras',
+                modalLabelParagraphs: 'Mínimo de Parágrafos',
+                modalCancel: 'Cancelar',
+                modalConfirm: 'Confirmar',
+                                configTitle: 'Configurar Regras de Conformidade',
+                labelMinWords: 'Mínimo de Palavras',
+                labelMinParagraphs: 'Mínimo de Parágrafos',
+                frequentWordsTitle: 'Palavras mais frequentes:',
                 errorClassify: 'Erro ao classificar. Tente novamente.'
             },
             en: {
@@ -711,6 +915,17 @@
                     layout_transitions: 'Transitions'
                 },
                 errorTiff: 'Please select a .tif or .tiff file',
+                                
+                changeRule: 'Change Rule',
+                modalTitle: 'Configure Compliance Rules',
+                modalLabelWords: 'Minimum Words',
+                modalLabelParagraphs: 'Minimum Paragraphs',
+                modalCancel: 'Cancel',
+                modalConfirm: 'Confirm',
+                                configTitle: 'Configure Compliance Rules',
+                labelMinWords: 'Minimum Words',
+                labelMinParagraphs: 'Minimum Paragraphs',
+                frequentWordsTitle: 'Most frequent words:',
                 errorClassify: 'Classification error. Please try again.'
             }
         };
@@ -735,10 +950,14 @@
             document.getElementById('new-button').textContent = t.newButton;
             document.getElementById('result-preview-title').textContent = t.resultPreviewTitle;
             document.getElementById('feedback-title').textContent = t.feedbackTitle;
-            
+            document.getElementById('rule-btn-text').textContent = t.changeRule;
+            updateModalTexts();
+                        
             const buttons = document.querySelectorAll('.feedback-btn');
             if (buttons[0]) buttons[0].innerHTML = t.feedbackCorrect;
             if (buttons[1]) buttons[1].innerHTML = t.feedbackIncorrect;
+            
+            updateExplanationLanguage();
         }
 
         const uploadArea = document.getElementById('upload-area');
@@ -830,6 +1049,9 @@
 
             const formData = new FormData();
             formData.append('image', currentFile);
+            formData.append('min_words', minWords);
+            formData.append('min_paragraphs', minParagraphs);
+            formData.append('language', currentLang);
 
             try {
                 const response = await fetch(`${API_URL}/classify`, {
@@ -856,6 +1078,7 @@
         }
 
         function displayResult(data) {
+            currentFullResult = data;
             const t = translations[currentLang];
             const isAd = data.classification === 'advertisement';
 
@@ -873,7 +1096,10 @@
             if (data.explanation) {
                 const explanationDiv = document.createElement('div');
                 explanationDiv.className = 'explanation-text';
-                explanationDiv.textContent = data.explanation;
+                let explanation = translateExplanation(data);
+                // Colocar todos os números em negrito
+                explanation = explanation.replace(/(\d+)/g, '<strong>$1</strong>');
+                explanationDiv.innerHTML = explanation;
                 featuresGrid.appendChild(explanationDiv);
             }
 
@@ -886,43 +1112,29 @@
             }
 
             // Mostrar análise de texto (apenas para artigos científicos)
-            if (!isAd && data.word_count !== undefined) {
-                const wordCountDiv = document.createElement('div');
-                wordCountDiv.className = 'paragraph-count';
-                const complianceIcon = data.is_compliant ? '✅' : '❌';
-                const complianceText = data.is_compliant ? 
-                    (currentLang === 'pt' ? 'CONFORME' : 'COMPLIANT') : 
-                    (currentLang === 'pt' ? 'NÃO CONFORME' : 'NOT COMPLIANT');
-                wordCountDiv.innerHTML = `<strong>${currentLang === 'pt' ? 'Palavras' : 'Words'}:</strong> ${data.word_count} ${complianceIcon} ${complianceText}`;
-                featuresGrid.appendChild(wordCountDiv);
-            }
-
             // Mostrar top palavras frequentes (apenas para artigos científicos)
             if (!isAd && data.frequent_words && data.frequent_words.length > 0) {
                 const wordsTitle = document.createElement('div');
                 wordsTitle.className = 'paragraph-count';
                 wordsTitle.style.marginTop = '16px';
-                wordsTitle.innerHTML = `<strong>${currentLang === 'pt' ? 'Palavras mais frequentes:' : 'Most frequent words:'}</strong>`;
+                wordsTitle.innerHTML = `<strong>${t.frequentWordsTitle}</strong>`;
                 featuresGrid.appendChild(wordsTitle);
 
-                const wordsGrid = document.createElement('div');
-                wordsGrid.style.display = 'grid';
-                wordsGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-                wordsGrid.style.gap = '8px';
-                wordsGrid.style.fontSize = '14px';
-                wordsGrid.style.marginTop = '8px';
+                const wordsList = document.createElement('ul');
+                wordsList.className = 'word-list';
+                if (data.frequent_words.length > 5) {
+                    wordsList.classList.add('multi-column');
+                }
 
                 data.frequent_words.slice(0, 10).forEach(item => {
-                    const wordItem = document.createElement('div');
-                    wordItem.style.padding = '6px 12px';
-                    wordItem.style.background = '#f5f5f7';
-                    wordItem.style.borderRadius = '8px';
-                    wordItem.innerHTML = `${item.word}: <strong>${item.count}</strong>`;
-                    wordsGrid.appendChild(wordItem);
+                    const li = document.createElement('li');
+                    li.innerHTML = `${item.word}: <strong>${item.count}</strong>`;
+                    wordsList.appendChild(li);
                 });
 
-                featuresGrid.appendChild(wordsGrid);
+                featuresGrid.appendChild(wordsList);
             }
+
 
             // Reset feedback section
             document.getElementById('feedback-buttons').style.display = 'flex';
@@ -995,6 +1207,165 @@
         function hideError() {
             document.getElementById('error').classList.remove('show');
         }
-    </script>
+    
+        // Funções do Modal de Regras
+        function openRuleModal() {
+            document.getElementById('rule-modal').classList.add('show');
+            document.getElementById('modal-min-words').value = minWords;
+            document.getElementById('modal-min-paragraphs').value = minParagraphs;
+            updateModalTexts();
+        }
+
+        function closeRuleModal() {
+            document.getElementById('rule-modal').classList.remove('show');
+        }
+
+        function confirmRule() {
+            minWords = parseInt(document.getElementById('modal-min-words').value) || 2000;
+            minParagraphs = parseInt(document.getElementById('modal-min-paragraphs').value) || 8;
+            ruleConfigured = true;
+            closeRuleModal();
+        }
+
+        function updateModalTexts() {
+            const t = translations[currentLang];
+            document.getElementById('modal-title').textContent = t.modalTitle;
+            document.getElementById('modal-label-words').textContent = t.modalLabelWords;
+            document.getElementById('modal-label-paragraphs').textContent = t.modalLabelParagraphs;
+            document.getElementById('modal-btn-cancel').textContent = t.modalCancel;
+            document.getElementById('modal-btn-confirm').textContent = t.modalConfirm;
+        }
+
+        // Fechar modal ao clicar fora
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('rule-modal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeRuleModal();
+                    }
+                });
+            }
+        });
+
+
+        // Inicializar traduções ao carregar
+        window.addEventListener('DOMContentLoaded', function() {
+            updateTexts();
+        });
+
+        function translateExplanation(data) {
+            if (!data) return '';
+            
+            const isAd = data.classification === 'advertisement';
+            const isEnglish = currentLang === 'en';
+            
+            // Extrair informações básicas da explicação original
+            let explanation = '';
+            
+            if (isAd) {
+                if (isEnglish) {
+                    explanation = "Classified as advertisement due to typical characteristics of advertising.";
+                } else {
+                    explanation = "Classificado como advertisement devido a características típicas de anúncios publicitários.";
+                }
+            } else {
+                // Scientific article
+                const numParagraphs = data.num_paragraphs || 0;
+                const wordCount = data.word_count || 0;
+                
+                if (isEnglish) {
+                    explanation = `Classified as scientific article due to typical characteristics of academic publications.`;
+                    
+                    if (wordCount > 0) {
+                        const isCompliant = data.is_compliant || false;
+                        if (isCompliant) {
+                            explanation += ` Document COMPLIANT with standards (>${minWords} words and ≥${minParagraphs} paragraphs): ${wordCount} words, ${numParagraphs} paragraphs.`;
+                        } else {
+                            explanation += ` Document NOT COMPLIANT with standards: `;
+                            const issues = [];
+                            if (wordCount <= minWords) {
+                                issues.push(`only ${wordCount} words (minimum: ${minWords})`);
+                            }
+                            if (numParagraphs < minParagraphs) {
+                                issues.push(`only ${numParagraphs} paragraphs (minimum: ${minParagraphs})`);
+                            }
+                            explanation += issues.join(', ') + '.';
+                        }
+                    }
+                } else {
+                    explanation = `Classificado como artigo científico devido a características típicas de publicações acadêmicas.`;
+                    
+                    if (wordCount > 0) {
+                        const isCompliant = data.is_compliant || false;
+                        if (isCompliant) {
+                            explanation += ` Documento CONFORME às normas (>${minWords} palavras e ≥${minParagraphs} parágrafos): ${wordCount} palavras, ${numParagraphs} parágrafos.`;
+                        } else {
+                            explanation += ` Documento NÃO CONFORME às normas: `;
+                            const issues = [];
+                            if (wordCount <= minWords) {
+                                issues.push(`apenas ${wordCount} palavras (mínimo: ${minWords})`);
+                            }
+                            if (numParagraphs < minParagraphs) {
+                                issues.push(`apenas ${numParagraphs} parágrafos (mínimo: ${minParagraphs})`);
+                            }
+                            explanation += issues.join(', ') + '.';
+                        }
+                    }
+                }
+            }
+            
+            return explanation;
+        }
+
+        function updateExplanationLanguage() {
+            if (!currentFullResult) return;
+            
+            const explanationDiv = document.querySelector('.explanation-text');
+            if (explanationDiv) {
+                const newExplanation = translateExplanation(currentFullResult);
+                explanationDiv.innerHTML = newExplanation.replace(/(\d+)/g, '<strong>$1</strong>');
+            }
+            
+            // Atualizar label de parágrafos
+            const paragraphDiv = document.querySelector('.paragraph-count');
+            if (paragraphDiv && currentFullResult.num_paragraphs) {
+                const t = translations[currentLang];
+                paragraphDiv.innerHTML = `<strong>${t.paragraphs}:</strong> ${currentFullResult.num_paragraphs}`;
+            }
+            
+            // Atualizar título de palavras frequentes
+            const wordsTitle = document.querySelectorAll('.paragraph-count')[1];
+            if (wordsTitle && currentFullResult.frequent_words) {
+                const t = translations[currentLang];
+                wordsTitle.innerHTML = `<strong>${t.frequentWordsTitle}</strong>`;
+            }
+        }
+
+</script>
+
+    <!-- Modal de Regras -->
+    <div class="modal" id="rule-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modal-title">Configure Compliance Rules</div>
+            <div class="modal-field">
+                <label for="modal-min-words" id="modal-label-words">Minimum Words</label>
+                <input type="number" id="modal-min-words" value="2000" min="100" step="100">
+            </div>
+            <div class="modal-field">
+                <label for="modal-min-paragraphs" id="modal-label-paragraphs">Minimum Paragraphs</label>
+                <input type="number" id="modal-min-paragraphs" value="8" min="1" step="1">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="closeRuleModal()">
+                    <span id="modal-btn-cancel">Cancel</span>
+                </button>
+                <button class="modal-btn modal-btn-confirm" onclick="confirmRule()">
+                    <span id="modal-btn-confirm">Confirm</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
