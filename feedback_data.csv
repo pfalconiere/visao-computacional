@@ -1,0 +1,3 @@
+timestamp,image_name,predicted_class,is_correct,correct_class
+2025-10-25 10:39:15,PUBLICATIONS056448-6.tif,scientific_article,true,scientific_article
+2025-10-25 10:40:05,PUBLICATIONS055842-5.tif,scientific_article,true,scientific_article
