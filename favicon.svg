@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Círculo externo (alvo) -->
+  <circle cx="50" cy="50" r="45" fill="none" stroke="#000" stroke-width="3"/>
+  
+  <!-- Círculo médio -->
+  <circle cx="50" cy="50" r="32" fill="none" stroke="#000" stroke-width="2.5"/>
+  
+  <!-- Círculo interno -->
+  <circle cx="50" cy="50" r="19" fill="none" stroke="#000" stroke-width="2"/>
+  
+  <!-- X no centro -->
+  <line x1="40" y1="40" x2="60" y2="60" stroke="#000" stroke-width="4" stroke-linecap="round"/>
+  <line x1="60" y1="40" x2="40" y2="60" stroke="#000" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Ponto central -->
+  <circle cx="50" cy="50" r="3" fill="#000"/>
+</svg>
