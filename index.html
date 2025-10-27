@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Updated: 2025-10-27 11:15:00 - v7 - TEAM PHOTOS + TITLES -->
+<!-- Updated: 2025-10-27 11:20:00 - v8 - TEAM AS PAGE NAVIGATION -->
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -767,59 +767,30 @@
         /* Team Page Styles */
         .team-page {
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #fbfbfd;
-            z-index: 2000;
-            overflow-y: auto;
         }
 
         .team-page.active {
             display: block;
         }
 
-        .team-header {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: saturate(180%) blur(20px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-            padding: 20px 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        .main-content.hidden {
+            display: none;
         }
 
-        .team-header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 22px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .team-title {
-            font-size: 32px;
+        .team-page-title {
+            text-align: center;
+            font-size: 48px;
             font-weight: 700;
             color: #1d1d1f;
+            margin-bottom: 16px;
+            padding-top: 40px;
         }
 
-        .close-team-btn {
-            padding: 8px 20px;
-            background: #1d1d1f;
-            color: white;
-            border: none;
-            border-radius: 980px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .close-team-btn:hover {
-            background: #424245;
+        .team-page-subtitle {
+            text-align: center;
+            font-size: 21px;
+            color: #6e6e73;
+            margin-bottom: 60px;
         }
 
         .team-container {
@@ -958,7 +929,7 @@
 <body>
     <header>
         <div class="header-content">
-            <div class="logo" data-testid="app-logo">Document Classifier</div>
+            <div class="logo" data-testid="app-logo" onclick="closeTeamPage()" style="cursor: pointer;">Document Classifier</div>
             <div style="display: flex; gap: 16px; align-items: center;">
                 <a href="${API_URL}/api/docs" target="_blank" class="api-link" data-testid="api-link" id="api-link">API</a>
                 <button class="rule-button" data-testid="rule-button" id="rule-button" onclick="openRuleModal()">
@@ -976,7 +947,7 @@
         </div>
     </header>
 
-    <main>
+    <main id="main-content" class="main-content">
         <div class="hero">
             <h1 id="hero-title" data-testid="hero-title">Classifique documentos</h1>
             <p id="hero-subtitle" data-testid="hero-subtitle">Diferencie advertisements de scientific articles com IA</p>
@@ -1112,8 +1083,8 @@
                 modalCancel: 'Cancelar',
                 modalConfirm: 'Confirmar',
                 teamButton: 'Time',
-                teamTitle: 'Time',
-                closeTeam: 'Fechar',
+                teamTitle: 'Nosso Time',
+                teamSubtitle: 'Conheça as pessoas por trás do projeto',
                                 configTitle: 'Configurar Regras de Conformidade',
                 labelMinWords: 'Mínimo de Palavras',
                 labelMinParagraphs: 'Mínimo de Parágrafos',
@@ -1159,8 +1130,8 @@
                 modalCancel: 'Cancel',
                 modalConfirm: 'Confirm',
                 teamButton: 'Team',
-                teamTitle: 'Team',
-                closeTeam: 'Close',
+                teamTitle: 'Our Team',
+                teamSubtitle: 'Meet the people behind the project',
                                 configTitle: 'Configure Compliance Rules',
                 labelMinWords: 'Minimum Words',
                 labelMinParagraphs: 'Minimum Paragraphs',
@@ -1192,7 +1163,7 @@
             document.getElementById('rule-btn-text').textContent = t.changeRule;
             document.getElementById('team-btn-text').textContent = t.teamButton;
             document.getElementById('team-title').textContent = t.teamTitle;
-            document.getElementById('close-team-text').textContent = t.closeTeam;
+            document.getElementById('team-subtitle').textContent = t.teamSubtitle;
             updateModalTexts();
                         
             const buttons = document.querySelectorAll('.feedback-btn');
@@ -1503,15 +1474,21 @@
         }
 
         // Funções da Página Team
+        let currentPage = 'main'; // 'main' ou 'team'
+        
         function openTeamPage() {
+            document.getElementById('main-content').classList.add('hidden');
             document.getElementById('team-page').classList.add('active');
-            document.body.style.overflow = 'hidden';
+            currentPage = 'team';
             loadLinkedInPhotos();
+            window.scrollTo(0, 0);
         }
 
         function closeTeamPage() {
             document.getElementById('team-page').classList.remove('active');
-            document.body.style.overflow = 'auto';
+            document.getElementById('main-content').classList.remove('hidden');
+            currentPage = 'main';
+            window.scrollTo(0, 0);
         }
 
         // Carregar fotos do LinkedIn
@@ -1689,16 +1666,10 @@
 
 
     <!-- Team Page -->
-    <div class="team-page" id="team-page">
-        <div class="team-header">
-            <div class="team-header-content">
-                <h1 class="team-title" id="team-title">Time</h1>
-                <button class="close-team-btn" onclick="closeTeamPage()">
-                    <span id="close-team-text">Fechar</span>
-                </button>
-            </div>
-        </div>
+    <section class="team-page" id="team-page">
         <div class="team-container">
+            <h1 class="team-page-title" id="team-title">Nosso Time</h1>
+            <p class="team-page-subtitle" id="team-subtitle">Conheça as pessoas por trás do projeto</p>
             <div class="team-grid">
                 <!-- Ana Paula -->
                 <div class="team-card">
@@ -1741,7 +1712,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <!-- Footer -->
     <footer>
