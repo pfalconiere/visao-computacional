@@ -1,9 +1,19 @@
 <!DOCTYPE html>
+<!-- Updated: 2025-10-27 16:10:00 - v14 - PROGRESS BAR i18n FIX -->
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Classificador de Documentos</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="cache-control" content="max-age=0" />
+    <meta name="expires" content="0" />
+    <meta name="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+    <meta name="pragma" content="no-cache" />
+    <title>Document Classifier - With Feedback</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1055">
+    <script src="https://cdn.jsdelivr.net/npm/tiff.js@latest/tiff.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -12,136 +22,496 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #fbfbfd;
+            color: #1d1d1f;
+            line-height: 1.47059;
+            font-weight: 400;
+            letter-spacing: -0.022em;
             min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 22px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            padding: 20px;
         }
 
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 800px;
+        .logo {
+            font-size: 21px;
+            font-weight: 600;
+            letter-spacing: -0.021em;
+            color: #1d1d1f;
+        }
+
+        .lang-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.04);
+            border-radius: 980px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .lang-toggle:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .lang-toggle span {
+            font-size: 13px;
+            color: #6e6e73;
+            font-weight: 500;
+        }
+
+        .lang-toggle .active {
+            color: #0071e3;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 22px 40px;
             width: 100%;
-            padding: 40px;
         }
 
-        h1 {
+        .hero {
             text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.5em;
+            margin-bottom: 60px;
         }
 
-        .subtitle {
-            text-align: center;
-            color: #666;
+        .hero h1 {
+            font-size: 56px;
+            line-height: 1.07143;
+            font-weight: 600;
+            letter-spacing: -0.005em;
+            margin-bottom: 6px;
+        }
+
+        .hero p {
+            font-size: 21px;
+            line-height: 1.381;
+            font-weight: 400;
+            letter-spacing: 0.011em;
+            color: #6e6e73;
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 18px;
+            padding: 48px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
             margin-bottom: 40px;
-            font-size: 1.1em;
         }
 
         .upload-area {
-            border: 3px dashed #667eea;
-            border-radius: 15px;
-            padding: 60px 40px;
+            border: 2px dashed #d2d2d7;
+            border-radius: 12px;
+            padding: 60px 20px;
             text-align: center;
-            background: #f8f9ff;
-            cursor: pointer;
             transition: all 0.3s ease;
-            margin-bottom: 30px;
+            cursor: pointer;
+            background: #fbfbfd;
         }
 
         .upload-area:hover {
-            background: #eef2ff;
-            border-color: #764ba2;
+            border-color: #1d1d1f;
+            background: #f5f5f7;
         }
 
         .upload-area.dragover {
-            background: #e0e7ff;
-            border-color: #4c1d95;
+            border-color: #1d1d1f;
+            background: #f0f0f0;
         }
 
         .upload-icon {
-            font-size: 4em;
+            font-size: 48px;
             margin-bottom: 20px;
         }
 
         .upload-text {
-            color: #667eea;
-            font-size: 1.2em;
+            font-size: 17px;
+            color: #6e6e73;
+            margin-bottom: 12px;
+        }
+
+        .upload-button {
+            display: inline-block;
+            background: #1d1d1f;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 980px;
+            font-size: 17px;
+            font-weight: 400;
+            cursor: pointer;
+            border: none;
+            transition: background 0.2s ease;
+        }
+
+        .upload-button:hover {
+            background: #424245;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .preview-section {
+            display: none;
+            background: white;
+            border-radius: 18px;
+            padding: 48px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            margin-bottom: 40px;
+        }
+
+        .preview-section.show {
+            display: block;
+        }
+
+        .preview-title {
+            font-size: 24px;
             font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .upload-hint {
-            color: #999;
-            font-size: 0.9em;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .preview-container {
-            display: none;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             text-align: center;
         }
 
-        .preview-container img {
-            max-width: 100%;
-            max-height: 400px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        .preview-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .preview-image-container {
+            width: 100%;
+            max-width: 600px;
+            background: #f5f5f7;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .preview-image {
+            width: 100%;
+            height: auto;
+            display: block;
         }
 
         .file-info {
-            margin-top: 15px;
-            color: #666;
-            font-size: 0.9em;
+            text-align: center;
+            margin-top: 12px;
         }
 
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .file-name {
+            font-size: 15px;
+            color: #6e6e73;
+            margin-bottom: 4px;
+        }
+
+        .file-size {
+            font-size: 13px;
+            color: #86868b;
+        }
+
+        .classify-button {
+            background: #1d1d1f;
             color: white;
+            padding: 14px 32px;
+            border-radius: 980px;
+            font-size: 17px;
+            font-weight: 400;
             border: none;
-            padding: 15px 40px;
-            font-size: 1.1em;
-            font-weight: 600;
-            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            margin-bottom: 15px;
+            transition: background 0.2s ease;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        .classify-button:hover {
+            background: #424245;
         }
 
-        .btn:disabled {
-            background: #ccc;
+        .classify-button:disabled {
+            background: #d2d2d7;
             cursor: not-allowed;
-            transform: none;
+        }
+
+        .result-section {
+            display: none;
+            background: white;
+            border-radius: 18px;
+            padding: 48px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 32px;
+            align-items: start;
+        }
+
+        .result-preview {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .result-preview-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .result-preview-image {
+            width: 100%;
+            background: #f5f5f7;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .result-preview-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .result-preview-info {
+            text-align: center;
+            padding: 8px 0;
+        }
+
+        .result-preview-info .file-name {
+            font-size: 13px;
+            color: #6e6e73;
+            margin-bottom: 2px;
+        }
+
+        .result-preview-info .file-size {
+            font-size: 12px;
+            color: #86868b;
+        }
+
+        .result-classification {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .result-type {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 0 0 24px 0;
+            background: transparent;
+            border-bottom: 1px solid #e5e5e7;
+        }
+
+        .result-icon {
+            font-size: 64px;
+            margin-bottom: 12px;
+        }
+
+        .result-label {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .feature-card {
+            background: #f5f5f7;
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        .feature-name {
+            font-size: 11px;
+            color: #6e6e73;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .feature-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .explanation-text {
+            background: transparent;
+            padding: 0;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #1d1d1f;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .paragraph-count {
+            background: transparent;
+            padding: 0;
+            margin-top: 12px;
+            font-size: 15px;
+            color: #1d1d1f;
+            text-align: left;
+        }
+
+        .paragraph-count strong {
+            font-weight: 600;
+        }
+
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            background: transparent;
+            padding: 0;
+            font-size: 15px;
+            color: #1d1d1f;
+            text-align: left;
+        }
+
+        .stat-item strong {
+            font-weight: 600;
+        }
+
+        /* Feedback Section */
+        .feedback-section {
+            background: transparent;
+            padding: 24px 0;
+            margin-top: 32px;
+            border-top: 1px solid #e5e5e7;
+        }
+
+        .feedback-title {
+            font-size: 17px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #1d1d1f;
+        }
+
+        .feedback-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .feedback-btn {
+            flex: 1;
+            padding: 12px 24px;
+            border-radius: 980px;
+            font-size: 15px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .feedback-btn-correct {
+            background: #1d1d1f;
+            color: white;
+        }
+
+        .feedback-btn-correct:hover {
+            background: #424245;
+        }
+
+        .feedback-btn-incorrect {
+            background: #1d1d1f;
+            color: white;
+        }
+
+        .feedback-btn-incorrect:hover {
+            background: #424245;
+        }
+
+        .feedback-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .feedback-success {
+            text-align: center;
+            color: #34c759;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 12px;
+        }
+
+        .new-classification {
+            text-align: center;
+        }
+
+        .new-button {
+            background: #1d1d1f;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 980px;
+            font-size: 17px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .new-button:hover {
+            background: #424245;
         }
 
         .loading {
             display: none;
             text-align: center;
-            padding: 30px;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
         }
 
         .spinner {
+            width: 40px;
+            height: 40px;
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border-top: 4px solid #0071e3;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
         }
@@ -151,348 +521,1411 @@
             100% { transform: rotate(360deg); }
         }
 
-        .result {
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
             display: none;
-            padding: 30px;
-            border-radius: 15px;
-            margin-top: 30px;
-            animation: slideUp 0.5s ease;
         }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .progress-container.show {
+            display: block;
         }
 
-        .result.advertisement {
-            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-            border: 3px solid #fdcb6e;
-        }
-
-        .result.scientific_article {
-            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-            border: 3px solid #0984e3;
-        }
-
-        .result-icon {
-            font-size: 4em;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .result-title {
-            font-size: 2em;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .result-confidence {
-            text-align: center;
-            font-size: 1.3em;
-            color: #555;
-            margin-bottom: 25px;
-        }
-
-        .result-details {
-            background: rgba(255, 255, 255, 0.5);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .detail-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .detail-item:last-child {
-            border-bottom: none;
-        }
-
-        .detail-label {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .detail-value {
-            color: #666;
-        }
-
-        .characteristics {
-            background: rgba(255, 255, 255, 0.5);
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        .characteristics h3 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-
-        .characteristics ul {
-            list-style: none;
-        }
-
-        .characteristics li {
-            padding: 8px 0;
-            padding-left: 25px;
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
             position: relative;
-            color: #555;
         }
 
-        .characteristics li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #27ae60;
-            font-weight: bold;
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0071e3 0%, #0051a8 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 14px;
+            color: #6e6e73;
+        }
+
+        .progress-percent {
+            font-weight: 600;
+            color: #1d1d1f;
         }
 
         .error {
-            background: #ff7675;
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
             display: none;
-            margin-top: 20px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: #856404;
         }
 
-        .btn-secondary {
-            background: #95a5a6;
-            margin-top: 10px;
+        .error.show {
+            display: block;
         }
 
-        .btn-secondary:hover {
-            background: #7f8c8d;
+        .converting {
+            text-align: center;
+            padding: 20px;
+            color: #6e6e73;
+            font-size: 15px;
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 20px;
+            .hero h1 {
+                font-size: 40px;
             }
-            
-            h1 {
-                font-size: 2em;
+
+            .hero p {
+                font-size: 17px;
             }
-            
-            .upload-area {
-                padding: 40px 20px;
+
+            .upload-section,
+            .preview-section,
+            .result-section {
+                padding: 24px;
+            }
+
+            .result-layout {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feedback-buttons {
+                flex-direction: column;
             }
         }
+    
+        .config-section {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .config-title {
+            font-size: 19px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1d1d1f;
+        }
+
+        .config-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .config-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .config-field label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6e6e73;
+        }
+
+        .config-field input {
+            padding: 10px 12px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        .config-field input:focus {
+            outline: none;
+            border-color: #0071e3;
+        }
+
+        .word-list {
+            list-style: disc;
+            padding-left: 20px;
+            margin: 12px auto;
+            text-align: left;
+            column-count: 1;
+            column-gap: 20px;
+            display: inline-block;
+            max-width: 400px;
+        }
+
+        .word-list li {
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #1d1d1f;
+        }
+
+        .words-container {
+            text-align: center;
+            margin-top: 16px;
+        }
+        
+        .words-title {
+            text-align: left;
+        }
+
+        @media (min-width: 768px) {
+            .word-list.multi-column {
+                column-count: 2;
+            }
+        }
+
+    
+        .rule-button {
+            padding: 6px 16px;
+            background: #1d1d1f;
+            color: white;
+            border: none;
+            border-radius: 980px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .rule-button:hover {
+            background: #424245;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 18px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #1d1d1f;
+        }
+
+        .modal-field {
+            margin-bottom: 20px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6e6e73;
+            margin-bottom: 8px;
+        }
+
+        .modal-field input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d2d2d7;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .modal-field input:focus {
+            outline: none;
+            border-color: #0071e3;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 980px;
+            font-size: 15px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .modal-btn-cancel {
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #e8e8ed;
+        }
+
+        .modal-btn-confirm {
+            background: #1d1d1f;
+            color: white;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #424245;
+        }
+
+        /* Team Page Styles */
+        .team-page {
+            display: none;
+        }
+
+        .team-page.active {
+            display: block;
+        }
+
+        .main-content.hidden {
+            display: none;
+        }
+
+        .team-page-title {
+            text-align: center;
+            font-size: 48px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 16px;
+            padding-top: 40px;
+        }
+
+        .team-page-subtitle {
+            text-align: center;
+            font-size: 21px;
+            color: #6e6e73;
+            margin-bottom: 60px;
+        }
+
+        .team-container {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 22px;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 32px;
+            margin-top: 40px;
+        }
+
+        .team-card {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 18px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            min-height: 450px;
+        }
+
+        .team-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .team-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+            overflow: hidden;
+            border: 3px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .team-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .team-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 4px;
+        }
+
+        .team-title {
+            font-size: 12px;
+            color: #6e6e73;
+            margin-bottom: 12px;
+            font-weight: 500;
+            line-height: 1.4;
+            min-height: 40px;
+        }
+
+        .team-description {
+            font-size: 13px;
+            color: #86868b;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            text-align: left;
+            flex-grow: 1;
+        }
+
+        .team-linkedin {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #1d1d1f;
+            color: white;
+            text-decoration: none;
+            border-radius: 980px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .team-linkedin:hover {
+            background: #424245;
+            transform: scale(1.05);
+        }
+    
+        .api-link {
+            padding: 6px 16px;
+            background: #1d1d1f;
+            color: white;
+            text-decoration: none;
+            border-radius: 980px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+
+        .api-link:hover {
+            background: #424245;
+            text-decoration: none;
+        }
+
+    
+        footer {
+            background: #f5f5f7;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 32px 22px;
+            margin-top: 80px;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-text {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #6e6e73;
+        }
+
+        .footer-text strong {
+            color: #1d1d1f;
+            font-weight: 600;
+        }
+
+        .footer-year {
+            font-size: 12px;
+            color: #86868b;
+            margin-top: 8px;
+        }
+
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📄 Classificador de Documentos</h1>
-        <p class="subtitle">Identifique se um documento é um Advertisement ou Scientific Article</p>
+    <header>
+        <div class="header-content">
+            <div class="logo" data-testid="app-logo" onclick="closeTeamPage()" style="cursor: pointer;">Document Classifier</div>
+            <div style="display: flex; gap: 16px; align-items: center;">
+                <a href="${API_URL}/api/docs" target="_blank" class="api-link" data-testid="api-link" id="api-link">API</a>
+                <button class="rule-button" data-testid="rule-button" id="rule-button" onclick="openRuleModal()">
+                    <span id="rule-btn-text">Alterar Regra</span>
+                </button>
+                <button class="rule-button" data-testid="team-button" id="team-button" onclick="openTeamPage()">
+                    <span id="team-btn-text">Time</span>
+                </button>
+                <div class="lang-toggle" data-testid="lang-toggle" onclick="toggleLanguage()">
+                    <span id="lang-pt" class="active" data-testid="lang-pt">PT</span>
+                    <span>|</span>
+                    <span id="lang-en" data-testid="lang-en">EN</span>
+                </div>
+            </div>
+        </div>
+    </header>
 
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📁</div>
-            <div class="upload-text">Clique ou arraste uma imagem aqui</div>
-            <div class="upload-hint">Formatos suportados: TIF, TIFF (apenas)</div>
-            <input type="file" id="fileInput" accept=".tif,.tiff">
+    <main id="main-content" class="main-content">
+        <div class="hero">
+            <h1 id="hero-title" data-testid="hero-title">Classifique documentos</h1>
+            <p id="hero-subtitle" data-testid="hero-subtitle">Diferencie advertisements de scientific articles com IA</p>
+        </div>
         </div>
 
-        <div class="preview-container" id="previewContainer">
-            <img id="preview" src="" alt="Preview">
-            <div class="file-info" id="fileInfo"></div>
+        <div class="error" id="error" data-testid="error-message"></div>
+
+        <div class="upload-section" id="upload-section">
+            <div class="upload-area" id="upload-area" data-testid="upload-area" onclick="document.getElementById('file-input').click()">
+                <div class="upload-icon" data-testid="upload-icon">📄</div>
+                <div class="upload-text" id="upload-text" data-testid="upload-text">Arraste uma imagem .tif ou clique para selecionar</div>
+                <button class="upload-button" id="upload-button" data-testid="upload-button">Escolher arquivo</button>
+            </div>
+            <input type="file" id="file-input" class="file-input" data-testid="file-input" accept=".tif,.tiff">
         </div>
 
-        <button class="btn" id="classifyBtn" disabled>Classificar Documento</button>
-        <button class="btn btn-secondary" id="newBtn" style="display: none;">Classificar Outro Documento</button>
+        <div class="preview-section" id="preview-section" data-testid="preview-section">
+            <h2 class="preview-title" id="preview-title">Preview</h2>
+            <div class="preview-container">
+                <div class="converting" id="converting" style="display: none;">Processando imagem...</div>
+                <div class="preview-image-container" id="preview-image-container">
+                    <img id="preview-image" data-testid="preview-image" class="preview-image" alt="Preview">
+                </div>
+                <div class="file-info">
+                    <div class="file-name" id="file-name">document.tif</div>
+                    <div class="file-size" id="file-size">0 KB</div>
+                </div>
+                <button class="classify-button" id="classify-button" data-testid="classify-button" onclick="classifyImage()">Classificar documento</button>
+            </div>
+        </div>
 
-        <div class="loading" id="loading">
+        <div class="loading" id="loading" data-testid="loading">
             <div class="spinner"></div>
-            <p>Analisando documento...</p>
+            <p id="loading-text">Analisando documento...</p>
+            <div class="progress-container" id="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="progress-text">
+                    <span class="progress-percent" id="progress-percent">0%</span>
+                    <span id="progress-status">Iniciando...</span>
+                </div>
+            </div>
         </div>
 
-        <div class="result" id="result">
-            <div class="result-icon" id="resultIcon"></div>
-            <div class="result-title" id="resultTitle"></div>
-            <div class="result-confidence" id="resultConfidence"></div>
-            
-            <div class="result-details">
-                <div class="detail-item">
-                    <span class="detail-label">Score:</span>
-                    <span class="detail-value" id="score"></span>
+        <div class="result-section" id="result-section" data-testid="result-section">
+            <div class="result-layout">
+                <div class="result-preview">
+                    <h3 class="result-preview-title" id="result-preview-title">Documento analisado</h3>
+                    <div class="result-preview-image">
+                        <img id="result-preview-img" alt="Document">
+                    </div>
+                    <div class="result-preview-info">
+                        <div class="file-name" id="result-file-name">document.tif</div>
+                        <div class="file-size" id="result-file-size">0 KB</div>
+                    </div>
                 </div>
-                <div class="detail-item">
-                    <span class="detail-label">Altura Média:</span>
-                    <span class="detail-value" id="altura"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Desvio de Altura:</span>
-                    <span class="detail-value" id="desvio"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Densidade de Texto:</span>
-                    <span class="detail-value" id="densidade"></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Componentes:</span>
-                    <span class="detail-value" id="componentes"></span>
+
+                <div class="result-classification">
+                    <div class="result-type">
+                        <div class="result-icon" id="result-icon"></div>
+                        <h2 class="result-label" id="result-label">Advertisement</h2>
+                    </div>
+
+                    <div class="features-grid" id="features-grid"></div>
+
+                    <!-- FEEDBACK SECTION -->
+                    <div class="feedback-section" id="feedback-section">
+                        <div class="feedback-title" id="feedback-title">Esta classificação está correta?</div>
+                        <div class="feedback-buttons" id="feedback-buttons">
+                            <button class="feedback-btn feedback-btn-correct" onclick="sendFeedback(true)">
+                                Correto
+                            </button>
+                            <button class="feedback-btn feedback-btn-incorrect" onclick="sendFeedback(false)">
+                                Incorreto
+                            </button>
+                        </div>
+                        <div class="feedback-success" id="feedback-success" style="display: none;"></div>
+                    </div>
                 </div>
             </div>
 
-            <div class="characteristics" id="characteristics"></div>
+            <div class="new-classification">
+                <button class="new-button" onclick="resetClassifier()" id="new-button">Nova classificação</button>
+            </div>
         </div>
-
-        <div class="error" id="error"></div>
-    </div>
+    </main>
 
     <script>
-        const API_URL = 'http://localhost:5000/classify';
+        let currentLang = 'pt';
+        let currentFile = null;
+        let currentPreviewUrl = null;
+        let currentClassification = null;
+        let currentFullResult = null;
+        let feedbackSent = false;
+        let ruleConfigured = false;
+        let minWords = 2000;
+        let minParagraphs = 8;
         
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const previewContainer = document.getElementById('previewContainer');
-        const preview = document.getElementById('preview');
-        const fileInfo = document.getElementById('fileInfo');
-        const classifyBtn = document.getElementById('classifyBtn');
-        const newBtn = document.getElementById('newBtn');
-        const loading = document.getElementById('loading');
-        const result = document.getElementById('result');
-        const error = document.getElementById('error');
-        
-        let selectedFile = null;
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:5000'
+            : 'https://visao-computacional.onrender.com';
 
-        // Click para upload
-        uploadArea.addEventListener('click', () => fileInput.click());
+        const translations = {
+            pt: {
+                heroTitle: 'Classifique documentos',
+                heroSubtitle: 'Diferencie advertisements de scientific articles com IA',
+                uploadText: 'Arraste uma imagem .tif ou clique para selecionar',
+                uploadButton: 'Escolher arquivo',
+                previewTitle: 'Preview',
+                classifyButton: 'Classificar documento',
+                loadingText: 'Analisando documento...',
+                convertingText: 'Processando imagem...',
+                newButton: 'Nova classificação',
+                resultPreviewTitle: 'Documento analisado',
+                feedbackTitle: 'Esta classificação está correta?',
+                feedbackCorrect: 'Correto',
+                feedbackIncorrect: 'Incorreto',
+                feedbackSuccess: '✓ Obrigado pelo feedback!',
+                advertisement: 'Advertisement',
+                scientificArticle: 'Artigo Científico',
+                paragraphs: 'Parágrafos',
+                features: {
+                    avg_component_height: 'Altura Média',
+                    avg_component_width: 'Largura Média',
+                    height_std: 'Desvio Altura',
+                    avg_aspect_ratio: 'Aspect Ratio',
+                    num_columns_detected: 'Colunas',
+                    text_density: 'Densidade',
+                    num_text_components: 'Componentes',
+                    num_paragraphs: 'Parágrafos',
+                    layout_transitions: 'Transições'
+                },
+                                footerText: 'Trabalho do Curso de Mestrado de Engenharia de Software 2025.1 - C.E.S.A.R<br><strong>MorayLab</strong> - Todos os direitos reservados',
+                errorTiff: 'Por favor, selecione um arquivo .tif ou .tiff',
+                                
+                changeRule: 'Alterar Regra',
+                modalTitle: 'Configurar Regras de Conformidade',
+                modalLabelWords: 'Mínimo de Palavras',
+                modalLabelParagraphs: 'Mínimo de Parágrafos',
+                modalCancel: 'Cancelar',
+                modalConfirm: 'Confirmar',
+                teamButton: 'Time',
+                teamTitle: 'Nosso Time',
+                teamSubtitle: 'Conheça as pessoas por trás do projeto',
+                teamDescAna: 'Engenheira de Software com 8+ anos de experiência especializada em sistemas escaláveis e de alto desempenho usando JavaScript, Node.js e Java. Habilidosa em Arquiteturas Monolíticas, Microserviços e Serverless, entregando soluções personalizadas e eficientes.',
+                teamDescBruno: 'Oficial da Polícia Militar do Estado de São Paulo, com foco estratégico em infraestrutura e gestão de TIC, avaliação de vulnerabilidades cibernéticas, hardening de servidores, projetos de inovação e inteligência cibernética.',
+                teamDescEvelin: 'Com experiência em direito e formação em tecnologia, atualmente trabalho no setor de Desenvolvimento de Sistemas do Poder Legislativo. Meu objetivo é combinar conhecimento jurídico com tecnologia para criar soluções inovadoras e eficientes.',
+                teamDescPedro: 'Engenheiro de Qualidade de Software com ampla experiência em automação de testes, DevOps e garantia de qualidade, tendo trabalhado para empresas como Moray Lab, Pitang e Inmetrics.',
+                progressInitializing: 'Iniciando...',
+                progressAnalyzing: 'Analisando estrutura...',
+                progressClassifying: 'Classificando...',
+                progressOCR: 'Processando texto (pode demorar)...',
+                progressFinalizing: 'Finalizando...',
+                progressPending: 'Tarefa aguardando processamento...',
+                                configTitle: 'Configurar Regras de Conformidade',
+                labelMinWords: 'Mínimo de Palavras',
+                labelMinParagraphs: 'Mínimo de Parágrafos',
+                frequentWordsTitle: 'Palavras mais frequentes:',
+                errorClassify: 'Erro ao classificar. Tente novamente.'
+            },
+            en: {
+                heroTitle: 'Classify documents',
+                heroSubtitle: 'Differentiate advertisements from scientific articles with AI',
+                uploadText: 'Drag a .tif image or click to select',
+                uploadButton: 'Choose file',
+                previewTitle: 'Preview',
+                classifyButton: 'Classify document',
+                loadingText: 'Analyzing document...',
+                convertingText: 'Processing image...',
+                newButton: 'New classification',
+                resultPreviewTitle: 'Analyzed document',
+                feedbackTitle: 'Is this classification correct?',
+                feedbackCorrect: 'Correct',
+                feedbackIncorrect: 'Incorrect',
+                feedbackSuccess: '✓ Thanks for your feedback!',
+                advertisement: 'Advertisement',
+                scientificArticle: 'Scientific Article',
+                paragraphs: 'Paragraphs',
+                features: {
+                    avg_component_height: 'Average Height',
+                    avg_component_width: 'Average Width',
+                    height_std: 'Height Deviation',
+                    avg_aspect_ratio: 'Aspect Ratio',
+                    num_columns_detected: 'Columns',
+                    text_density: 'Density',
+                    num_text_components: 'Components',
+                    num_paragraphs: 'Paragraphs',
+                    layout_transitions: 'Transitions'
+                },
+                                footerText: 'Work from the Software Engineering Master\'s Degree Course 2025.1 - C.E.S.A.R<br><strong>MorayLab</strong> - All rights reserved',
+                errorTiff: 'Please select a .tif or .tiff file',
+                                
+                changeRule: 'Change Rule',
+                modalTitle: 'Configure Compliance Rules',
+                modalLabelWords: 'Minimum Words',
+                modalLabelParagraphs: 'Minimum Paragraphs',
+                modalCancel: 'Cancel',
+                modalConfirm: 'Confirm',
+                teamButton: 'Team',
+                teamTitle: 'Our Team',
+                teamSubtitle: 'Meet the people behind the project',
+                teamDescAna: 'Software Engineer with 8+ years of experience specializing in scalable, high-performance systems using JavaScript, Node.js, Java, and Java. Skilled in Monolithic, Microservices, and Serverless Architectures, delivering tailored and efficient solutions.',
+                teamDescBruno: 'Military Police Officer of the State of São Paulo, with a strategic focus on ICT infrastructure and management, cyber vulnerability assessment, server hardening, innovation projects, and cyber intelligence.',
+                teamDescEvelin: 'With experience in law and background in technology, I currently work in the Legislative Power\'s Systems Development sector. My goal is to combine legal knowledge with technology to create innovative and efficient solutions.',
+                teamDescPedro: 'Software Quality Engineer with extensive experience in test automation, DevOps and quality assurance, having worked for companies such as Moray Lab, Pitang and Inmetrics.',
+                progressInitializing: 'Initializing...',
+                progressAnalyzing: 'Analyzing structure...',
+                progressClassifying: 'Classifying...',
+                progressOCR: 'Processing text (may take a while)...',
+                progressFinalizing: 'Finalizing...',
+                progressPending: 'Task waiting for processing...',
+                                configTitle: 'Configure Compliance Rules',
+                labelMinWords: 'Minimum Words',
+                labelMinParagraphs: 'Minimum Paragraphs',
+                frequentWordsTitle: 'Most frequent words:',
+                errorClassify: 'Classification error. Please try again.'
+            }
+        };
 
-        // Drag and drop
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
+        function toggleLanguage() {
+            currentLang = currentLang === 'pt' ? 'en' : 'pt';
+            document.getElementById('lang-pt').classList.toggle('active');
+            document.getElementById('lang-en').classList.toggle('active');
+            updateTexts();
+        }
 
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) handleFile(file);
-        });
-
-        // Seleção de arquivo
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) handleFile(file);
-        });
-
-        function handleFile(file) {
-            selectedFile = file;
+        function updateTexts() {
+            const t = translations[currentLang];
+            document.getElementById('hero-title').textContent = t.heroTitle;
+            document.getElementById('hero-subtitle').textContent = t.heroSubtitle;
+            document.getElementById('upload-text').textContent = t.uploadText;
+            document.getElementById('upload-button').textContent = t.uploadButton;
+            document.getElementById('preview-title').textContent = t.previewTitle;
+            document.getElementById('classify-button').textContent = t.classifyButton;
+            document.getElementById('loading-text').textContent = t.loadingText;
+            document.getElementById('converting').textContent = t.convertingText;
+            document.getElementById('new-button').textContent = t.newButton;
+            document.getElementById('result-preview-title').textContent = t.resultPreviewTitle;
+            document.getElementById('feedback-title').textContent = t.feedbackTitle;
+            document.getElementById('rule-btn-text').textContent = t.changeRule;
+            document.getElementById('team-btn-text').textContent = t.teamButton;
+            document.getElementById('team-title').textContent = t.teamTitle;
+            document.getElementById('team-subtitle').textContent = t.teamSubtitle;
+            document.getElementById('desc-ana').textContent = t.teamDescAna;
+            document.getElementById('desc-bruno').textContent = t.teamDescBruno;
+            document.getElementById('desc-evelin').textContent = t.teamDescEvelin;
+            document.getElementById('desc-pedro').textContent = t.teamDescPedro;
+            updateModalTexts();
+                        
+            const buttons = document.querySelectorAll('.feedback-btn');
+            if (buttons[0]) buttons[0].innerHTML = t.feedbackCorrect;
+            if (buttons[1]) buttons[1].innerHTML = t.feedbackIncorrect;
             
-            // Mostrar preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                preview.src = e.target.result;
-                previewContainer.style.display = 'block';
-                fileInfo.textContent = `${file.name} (${formatFileSize(file.size)})`;
-                classifyBtn.disabled = false;
-                result.style.display = 'none';
-                error.style.display = 'none';
-            };
-            reader.readAsDataURL(file);
+            document.getElementById('footer-text').innerHTML = t.footerText;
+            
+            // Atualizar texto do progress bar se estiver visível
+            const progressStatus = document.getElementById('progress-status');
+            if (progressStatus && progressStatus.textContent) {
+                const currentText = progressStatus.textContent.toLowerCase();
+                if (currentText.includes('aguardando') || currentText.includes('waiting')) {
+                    progressStatus.textContent = t.progressPending;
+                } else if (currentText.includes('iniciando') || currentText.includes('initializing')) {
+                    progressStatus.textContent = t.progressInitializing;
+                } else if (currentText.includes('estrutura') || currentText.includes('structure') || currentText.includes('analiz')) {
+                    progressStatus.textContent = t.progressAnalyzing;
+                } else if (currentText.includes('classificando') || currentText.includes('classifying')) {
+                    progressStatus.textContent = t.progressClassifying;
+                } else if (currentText.includes('ocr') || currentText.includes('texto') || currentText.includes('text') || currentText.includes('processing')) {
+                    progressStatus.textContent = t.progressOCR;
+                } else if (currentText.includes('finalizando') || currentText.includes('finalizing')) {
+                    progressStatus.textContent = t.progressFinalizing;
+                }
+            }
+            
+            updateExplanationLanguage();
         }
 
-        function formatFileSize(bytes) {
-            if (bytes < 1024) return bytes + ' B';
-            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        const uploadArea = document.getElementById('upload-area');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
         }
 
-        // Classificar
-        classifyBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.add('dragover');
+            }, false);
+        });
 
-            loading.style.display = 'block';
-            result.style.display = 'none';
-            error.style.display = 'none';
-            classifyBtn.disabled = true;
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.remove('dragover');
+            }, false);
+        });
 
-            const formData = new FormData();
-            formData.append('image', selectedFile);
+        uploadArea.addEventListener('drop', handleDrop, false);
+
+        // Add event listener for file input
+        document.getElementById('file-input').addEventListener('change', handleFileSelect, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        async function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.tif') && !file.name.toLowerCase().endsWith('.tiff')) {
+                showError(translations[currentLang].errorTiff);
+                return;
+            }
+
+            currentFile = file;
+            hideError();
+
+            const fileSize = (file.size / 1024).toFixed(2);
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-size').textContent = fileSize + ' KB';
+            
+            document.getElementById('upload-section').style.display = 'none';
+            document.getElementById('preview-section').classList.add('show');
+            document.getElementById('converting').style.display = 'block';
+            document.getElementById('preview-image-container').style.display = 'none';
 
             try {
-                const response = await fetch(API_URL, {
+                const arrayBuffer = await file.arrayBuffer();
+                const tiff = new Tiff({buffer: arrayBuffer});
+                const canvas = tiff.toCanvas();
+                
+                if (canvas) {
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                    currentPreviewUrl = dataUrl;
+                    document.getElementById('preview-image').src = dataUrl;
+                    document.getElementById('preview-image-container').style.display = 'block';
+                }
+            } catch (error) {
+                console.log('Could not convert TIFF:', error);
+                const placeholderUrl = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"%3E%3Crect width="600" height="400" fill="%23f5f5f7"/%3E%3Ctext x="50%25" y="50%25" font-family="system-ui" font-size="48" fill="%236e6e73" text-anchor="middle" dominant-baseline="middle"%3E🖼️%3C/text%3E%3Ctext x="50%25" y="65%25" font-family="system-ui" font-size="16" fill="%2386868b" text-anchor="middle" dominant-baseline="middle"%3ETIFF Document%3C/text%3E%3C/svg%3E';
+                currentPreviewUrl = placeholderUrl;
+                document.getElementById('preview-image').src = placeholderUrl;
+                document.getElementById('preview-image-container').style.display = 'block';
+            } finally {
+                document.getElementById('converting').style.display = 'none';
+            }
+        }
+
+        let pollingInterval = null;
+
+        async function classifyImage() {
+            if (!currentFile) return;
+
+            hideError();
+            document.getElementById('preview-section').classList.remove('show');
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('progress-container').classList.add('show');
+            updateProgress(0, translations[currentLang].progressInitializing);
+
+            const formData = new FormData();
+            formData.append('image', currentFile);
+            formData.append('min_words', minWords);
+            formData.append('min_paragraphs', minParagraphs);
+            formData.append('language', currentLang);
+
+            try {
+                // Tentar endpoint assíncrono primeiro
+                const response = await fetch(`${API_URL}/classify/async`, {
                     method: 'POST',
                     body: formData
                 });
 
                 const data = await response.json();
-                loading.style.display = 'none';
 
-                if (response.ok && data.success) {
-                    showResult(data);
-                } else {
-                    showError(data.error || 'Erro ao classificar imagem');
+                if (response.status === 503 || !data.task_id) {
+                    // Fallback para endpoint síncrono
+                    console.log('Usando modo síncrono (fallback)');
+                    await classifySync(formData);
+                    return;
                 }
-            } catch (err) {
-                loading.style.display = 'none';
-                showError('Erro ao conectar com a API. Certifique-se que está rodando em http://localhost:5000');
-                classifyBtn.disabled = false;
-            }
-        });
 
-        function showResult(data) {
-            const isAd = data.classification === 'advertisement';
-            
-            result.className = 'result ' + data.classification;
-            result.style.display = 'block';
-            
-            document.getElementById('resultIcon').textContent = isAd ? '📰' : '📚';
-            document.getElementById('resultTitle').textContent = isAd ? 'Advertisement' : 'Scientific Article';
-            document.getElementById('resultConfidence').textContent = 
-                `Confiança: ${(data.confidence * 100).toFixed(1)}% (${data.interpretation.confidence_level})`;
-            
-            document.getElementById('score').textContent = data.score;
-            document.getElementById('altura').textContent = data.features.altura_media.toFixed(1) + ' px';
-            document.getElementById('desvio').textContent = data.features.desvio_altura.toFixed(1);
-            document.getElementById('densidade').textContent = data.features.densidade_texto.toFixed(3);
-            document.getElementById('componentes').textContent = data.features.num_componentes;
-            
-            // Características
-            const charDiv = document.getElementById('characteristics');
-            if (data.interpretation.characteristics.length > 0) {
-                charDiv.innerHTML = '<h3>💡 Características Identificadas:</h3><ul>' +
-                    data.interpretation.characteristics.map(c => `<li>${c}</li>`).join('') +
-                    '</ul>';
-            } else {
-                charDiv.innerHTML = '';
+                if (data.success && data.task_id) {
+                    // Modo assíncrono: fazer polling
+                    await pollTaskStatus(data.task_id);
+                } else {
+                    throw new Error(data.error || 'Classification failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError(translations[currentLang].errorClassify);
+                document.getElementById('preview-section').classList.add('show');
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('progress-container').classList.remove('show');
             }
+        }
+
+        async function classifySync(formData) {
+            // Modo síncrono (fallback se Celery não estiver disponível)
+            try {
+                const response = await fetch(`${API_URL}/classify`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentClassification = data;
+                    feedbackSent = false;
+                    displayResult(data);
+                } else {
+                    throw new Error(data.error || 'Classification failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError(translations[currentLang].errorClassify);
+                document.getElementById('preview-section').classList.add('show');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('progress-container').classList.remove('show');
+            }
+        }
+
+        async function pollTaskStatus(taskId) {
+            const t = translations[currentLang];
+            let attempts = 0;
+            const maxAttempts = 150; // 5 minutos (2s * 150)
+
+            const poll = async () => {
+                try {
+                    const response = await fetch(`${API_URL}/task/${taskId}`);
+                    const data = await response.json();
+
+                    attempts++;
+
+                    // Atualizar progress bar
+                    const progress = data.progress || 0;
+                    let statusText = data.status || t.progressInitializing;
+                    
+                    // Traduzir status genéricos
+                    if (statusText.includes('aguardando') || statusText.includes('waiting') || data.state === 'PENDING') {
+                        statusText = t.progressPending;
+                    } else if (statusText.includes('Iniciando') || statusText.includes('Initializing')) {
+                        statusText = t.progressInitializing;
+                    } else if (statusText.includes('estrutura') || statusText.includes('structure')) {
+                        statusText = t.progressAnalyzing;
+                    } else if (statusText.includes('Classificando') || statusText.includes('Classifying')) {
+                        statusText = t.progressClassifying;
+                    } else if (statusText.includes('OCR') || statusText.includes('texto') || statusText.includes('text')) {
+                        statusText = t.progressOCR;
+                    } else if (statusText.includes('Finalizando') || statusText.includes('Finalizing')) {
+                        statusText = t.progressFinalizing;
+                    }
+
+                    updateProgress(progress, statusText);
+
+                    if (data.state === 'SUCCESS') {
+                        // Tarefa concluída!
+                        clearInterval(pollingInterval);
+                        currentClassification = data.result;
+                        feedbackSent = false;
+                        displayResult(data.result);
+                        document.getElementById('loading').classList.remove('show');
+                        document.getElementById('progress-container').classList.remove('show');
+                    } else if (data.state === 'FAILURE') {
+                        // Erro na tarefa
+                        clearInterval(pollingInterval);
+                        throw new Error(data.error || 'Task failed');
+                    } else if (attempts >= maxAttempts) {
+                        // Timeout
+                        clearInterval(pollingInterval);
+                        throw new Error('Timeout: tarefa demorou muito');
+                    }
+                    // PENDING ou PROGRESS: continuar polling
+                } catch (error) {
+                    clearInterval(pollingInterval);
+                    console.error('Polling error:', error);
+                    showError(translations[currentLang].errorClassify);
+                    document.getElementById('preview-section').classList.add('show');
+                    document.getElementById('loading').classList.remove('show');
+                    document.getElementById('progress-container').classList.remove('show');
+                }
+            };
+
+            // Iniciar polling a cada 2 segundos
+            pollingInterval = setInterval(poll, 2000);
+            poll(); // Chamar imediatamente também
+        }
+
+        function updateProgress(percent, statusText) {
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-percent').textContent = percent + '%';
+            document.getElementById('progress-status').textContent = ' - ' + statusText;
+        }
+
+        function displayResult(data) {
+            currentFullResult = data;
+            const t = translations[currentLang];
+            const isAd = data.classification === 'advertisement';
+
+            document.getElementById('result-preview-img').src = currentPreviewUrl || document.getElementById('preview-image').src;
+            document.getElementById('result-file-name').textContent = currentFile.name;
+            document.getElementById('result-file-size').textContent = (currentFile.size / 1024).toFixed(2) + ' KB';
+
+            document.getElementById('result-icon').textContent = '';
+            document.getElementById('result-label').textContent = isAd ? t.advertisement : t.scientificArticle;
+
+            const featuresGrid = document.getElementById('features-grid');
+            featuresGrid.innerHTML = '';
+
+            // Mostrar explicação textual
+            if (data.explanation) {
+                const explanationDiv = document.createElement('div');
+                explanationDiv.className = 'explanation-text';
+                let explanation = translateExplanation(data);
+                // Colocar todos os números em negrito
+                explanation = explanation.replace(/(\d+)/g, '<strong>$1</strong>');
+                explanationDiv.innerHTML = explanation;
+                featuresGrid.appendChild(explanationDiv);
+            }
+
+            // Mostrar parágrafos e palavras lado a lado (apenas para artigos científicos)
+            if (!isAd && data.num_paragraphs !== undefined) {
+                const statsContainer = document.createElement('div');
+                statsContainer.className = 'stats-container';
+                
+                // Parágrafos
+                const paragraphDiv = document.createElement('div');
+                paragraphDiv.className = 'stat-item';
+                paragraphDiv.innerHTML = `<strong>${t.paragraphs}:</strong> ${data.num_paragraphs}`;
+                statsContainer.appendChild(paragraphDiv);
+                
+                // Palavras
+                if (data.word_count !== undefined) {
+                    const wordCountDiv = document.createElement('div');
+                    wordCountDiv.className = 'stat-item';
+                    const wordLabel = currentLang === 'pt' ? 'Palavras' : 'Words';
+                    wordCountDiv.innerHTML = `<strong>${wordLabel}:</strong> ${data.word_count}`;
+                    statsContainer.appendChild(wordCountDiv);
+                }
+                
+                featuresGrid.appendChild(statsContainer);
+            }
+
+            // Mostrar análise de texto (apenas para artigos científicos)
+            // Mostrar top palavras frequentes (apenas para artigos científicos)
+            if (!isAd && data.frequent_words && data.frequent_words.length > 0) {
+                const wordsContainer = document.createElement('div');
+                wordsContainer.className = 'words-container';
+                wordsContainer.style.marginTop = '16px';
+                
+                const wordsTitle = document.createElement('div');
+                wordsTitle.className = 'paragraph-count words-title';
+                wordsTitle.innerHTML = `<strong>${t.frequentWordsTitle}</strong>`;
+                wordsContainer.appendChild(wordsTitle);
+
+                const wordsList = document.createElement('ul');
+                wordsList.className = 'word-list';
+                if (data.frequent_words.length > 5) {
+                    wordsList.classList.add('multi-column');
+                }
+
+                data.frequent_words.slice(0, 10).forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `${item.word}: <strong>${item.count}</strong>`;
+                    wordsList.appendChild(li);
+                });
+
+                wordsContainer.appendChild(wordsList);
+                featuresGrid.appendChild(wordsContainer);
+            }
+
+
+            // Reset feedback section
+            document.getElementById('feedback-buttons').style.display = 'flex';
+            document.getElementById('feedback-success').style.display = 'none';
+
             
-            newBtn.style.display = 'block';
+            // Re-enable feedback buttons
+            const buttons = document.querySelectorAll('.feedback-btn');
+            buttons.forEach(btn => btn.disabled = false);
+            document.getElementById('result-section').classList.add('show');
+        }
+
+        async function sendFeedback(isCorrect) {
+            if (feedbackSent) return;
+            
+            const t = translations[currentLang];
+            const buttons = document.querySelectorAll('.feedback-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
+            try {
+                const correctClass = isCorrect ? currentClassification.classification : 
+                                   (currentClassification.classification === 'advertisement' ? 'scientific_article' : 'advertisement');
+
+                const response = await fetch(`${API_URL}/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        image_name: currentFile.name,
+                        predicted_class: currentClassification.classification,
+                        is_correct: isCorrect.toString(),
+                        correct_class: correctClass
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    feedbackSent = true;
+                    document.getElementById('feedback-buttons').style.display = 'none';
+                    document.getElementById('feedback-success').textContent = t.feedbackSuccess;
+                    document.getElementById('feedback-success').style.display = 'block';
+                    console.log(`✓ Feedback enviado! Total: ${data.total_feedbacks}`);
+                }
+            } catch (error) {
+                console.error('Erro ao enviar feedback:', error);
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        function resetClassifier() {
+            currentFile = null;
+            currentPreviewUrl = null;
+            currentClassification = null;
+            feedbackSent = false;
+            document.getElementById('file-input').value = '';
+            document.getElementById('result-section').classList.remove('show');
+            document.getElementById('preview-section').classList.remove('show');
+            document.getElementById('upload-section').style.display = 'block';
+            hideError();
         }
 
         function showError(message) {
-            error.textContent = '❌ ' + message;
-            error.style.display = 'block';
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
         }
 
-        // Novo documento
-        newBtn.addEventListener('click', () => {
-            selectedFile = null;
-            fileInput.value = '';
-            previewContainer.style.display = 'none';
-            result.style.display = 'none';
-            error.style.display = 'none';
-            classifyBtn.disabled = true;
-            newBtn.style.display = 'none';
+        function hideError() {
+            document.getElementById('error').classList.remove('show');
+        }
+    
+        // Funções do Modal de Regras
+        function openRuleModal() {
+            document.getElementById('rule-modal').classList.add('show');
+            document.getElementById('modal-min-words').value = minWords;
+            document.getElementById('modal-min-paragraphs').value = minParagraphs;
+            updateModalTexts();
+        }
+
+        function closeRuleModal() {
+            document.getElementById('rule-modal').classList.remove('show');
+        }
+
+        function confirmRule() {
+            minWords = parseInt(document.getElementById('modal-min-words').value) || 2000;
+            minParagraphs = parseInt(document.getElementById('modal-min-paragraphs').value) || 8;
+            ruleConfigured = true;
+            closeRuleModal();
+        }
+
+        function updateModalTexts() {
+            const t = translations[currentLang];
+            document.getElementById('modal-title').textContent = t.modalTitle;
+            document.getElementById('modal-label-words').textContent = t.modalLabelWords;
+            document.getElementById('modal-label-paragraphs').textContent = t.modalLabelParagraphs;
+            document.getElementById('modal-btn-cancel').textContent = t.modalCancel;
+            document.getElementById('modal-btn-confirm').textContent = t.modalConfirm;
+        }
+
+        // Funções da Página Team
+        let currentPage = 'main'; // 'main' ou 'team'
+        
+        function openTeamPage() {
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('team-page').classList.add('active');
+            currentPage = 'team';
+            window.scrollTo(0, 0);
+        }
+
+        function closeTeamPage() {
+            document.getElementById('team-page').classList.remove('active');
+            document.getElementById('main-content').classList.remove('hidden');
+            currentPage = 'main';
+            window.scrollTo(0, 0);
+        }
+
+        // Fechar modal ao clicar fora
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('rule-modal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeRuleModal();
+                    }
+                });
+            }
         });
-    </script>
+
+
+        // Inicializar traduções ao carregar
+        window.addEventListener('DOMContentLoaded', function() {
+            updateTexts();
+        });
+
+        function translateExplanation(data) {
+            if (!data) return '';
+            
+            const isAd = data.classification === 'advertisement';
+            const isEnglish = currentLang === 'en';
+            
+            // Extrair informações básicas da explicação original
+            let explanation = '';
+            
+            if (isAd) {
+                if (isEnglish) {
+                    explanation = "Classified as advertisement due to typical characteristics of advertising.";
+                } else {
+                    explanation = "Classificado como advertisement devido a características típicas de anúncios publicitários.";
+                }
+            } else {
+                // Scientific article
+                const numParagraphs = data.num_paragraphs || 0;
+                const wordCount = data.word_count || 0;
+                
+                if (isEnglish) {
+                    explanation = `Classified as scientific article due to typical characteristics of academic publications.`;
+                    
+                    if (wordCount > 0) {
+                        const isCompliant = data.is_compliant || false;
+                        if (isCompliant) {
+                            explanation += ` Document COMPLIANT with standards (>${minWords} words and ≥${minParagraphs} paragraphs): ${wordCount} words, ${numParagraphs} paragraphs.`;
+                        } else {
+                            explanation += ` Document NOT COMPLIANT with standards: `;
+                            const issues = [];
+                            if (wordCount <= minWords) {
+                                issues.push(`only ${wordCount} words (minimum: ${minWords})`);
+                            }
+                            if (numParagraphs < minParagraphs) {
+                                issues.push(`only ${numParagraphs} paragraphs (minimum: ${minParagraphs})`);
+                            }
+                            explanation += issues.join(', ') + '.';
+                        }
+                    }
+                } else {
+                    explanation = `Classificado como artigo científico devido a características típicas de publicações acadêmicas.`;
+                    
+                    if (wordCount > 0) {
+                        const isCompliant = data.is_compliant || false;
+                        if (isCompliant) {
+                            explanation += ` Documento CONFORME às normas (>${minWords} palavras e ≥${minParagraphs} parágrafos): ${wordCount} palavras, ${numParagraphs} parágrafos.`;
+                        } else {
+                            explanation += ` Documento NÃO CONFORME às normas: `;
+                            const issues = [];
+                            if (wordCount <= minWords) {
+                                issues.push(`apenas ${wordCount} palavras (mínimo: ${minWords})`);
+                            }
+                            if (numParagraphs < minParagraphs) {
+                                issues.push(`apenas ${numParagraphs} parágrafos (mínimo: ${minParagraphs})`);
+                            }
+                            explanation += issues.join(', ') + '.';
+                        }
+                    }
+                }
+            }
+            
+            return explanation;
+        }
+
+        function updateExplanationLanguage() {
+            if (!currentFullResult) return;
+            
+            const explanationDiv = document.querySelector('.explanation-text');
+            if (explanationDiv) {
+                const newExplanation = translateExplanation(currentFullResult);
+                explanationDiv.innerHTML = newExplanation.replace(/(\d+)/g, '<strong>$1</strong>');
+            }
+            
+            // Atualizar label de parágrafos e palavras
+            const allStatItems = document.querySelectorAll('.stat-item');
+            if (allStatItems.length > 0 && currentFullResult.num_paragraphs) {
+                const t = translations[currentLang];
+                const wordLabel = currentLang === 'pt' ? 'Palavras' : 'Words';
+                
+                // Primeiro div é parágrafos
+                if (allStatItems[0]) {
+                    allStatItems[0].innerHTML = `<strong>${t.paragraphs}:</strong> ${currentFullResult.num_paragraphs}`;
+                }
+                
+                // Segundo div é palavras (se existir)
+                if (allStatItems[1] && currentFullResult.word_count) {
+                    allStatItems[1].innerHTML = `<strong>${wordLabel}:</strong> ${currentFullResult.word_count}`;
+                }
+            }
+            
+            // Atualizar título de palavras frequentes
+            const wordsContainer = document.querySelector('.words-container');
+            if (wordsContainer && currentFullResult.frequent_words) {
+                const t = translations[currentLang];
+                const wordsTitle = wordsContainer.querySelector('.words-title');
+                if (wordsTitle) {
+                    wordsTitle.innerHTML = `<strong>${t.frequentWordsTitle}</strong>`;
+                }
+            }
+        }
+
+
+        // Atualizar link da API com a URL correta
+        document.addEventListener('DOMContentLoaded', function() {
+            const apiLink = document.getElementById('api-link');
+            if (apiLink) {
+                apiLink.href = API_URL + '/api/docs';
+            }
+        });
+
+</script>
+
+    <!-- Modal de Regras -->
+    <div class="modal" id="rule-modal" data-testid="rule-modal">
+        <div class="modal-content" data-testid="modal-content">
+            <div class="modal-title" id="modal-title" data-testid="modal-title">Configure Compliance Rules</div>
+            <div class="modal-field">
+                <label for="modal-min-words" id="modal-label-words">Minimum Words</label>
+                <input type="number" id="modal-min-words" data-testid="modal-min-words" value="2000" min="100" step="100">
+            </div>
+            <div class="modal-field">
+                <label for="modal-min-paragraphs" id="modal-label-paragraphs">Minimum Paragraphs</label>
+                <input type="number" id="modal-min-paragraphs" data-testid="modal-min-paragraphs" value="8" min="1" step="1">
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" data-testid="modal-cancel-btn" onclick="closeRuleModal()">
+                    <span id="modal-btn-cancel">Cancel</span>
+                </button>
+                <button class="modal-btn modal-btn-confirm" data-testid="modal-confirm-btn" onclick="confirmRule()">
+                    <span id="modal-btn-confirm">Confirm</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Team Page -->
+    <section class="team-page" id="team-page">
+        <div class="team-container">
+            <h1 class="team-page-title" id="team-title">Nosso Time</h1>
+            <p class="team-page-subtitle" id="team-subtitle">Conheça as pessoas por trás do projeto</p>
+            <div class="team-grid">
+                <!-- Ana Paula -->
+                <div class="team-card">
+                    <div class="team-photo" id="photo-ana">
+                        <img src="team_photos/ana.jpg" alt="Ana Paula Barros" onerror="this.style.display='none'; this.parentElement.innerHTML='AP';">
+                    </div>
+                    <div class="team-name">Ana Paula Barros</div>
+                    <div class="team-title" id="title-ana">Software Engineer</div>
+                    <div class="team-description" id="desc-ana">Software Engineer with 8+ years of experience specializing in scalable, high-performance systems using JavaScript, Node.js, Java, and Java. Skilled in Monolithic, Microservices, and Serverless Architectures, delivering tailored and efficient solutions.</div>
+                    <a href="https://www.linkedin.com/in/ana-paula-barros-2a452190/" target="_blank" class="team-linkedin" id="linkedin-ana">LinkedIn</a>
+                </div>
+                
+                <!-- Bruno -->
+                <div class="team-card">
+                    <div class="team-photo" id="photo-bruno">
+                        <img src="team_photos/bruno.jpg" alt="Bruno Lutiano" onerror="this.style.display='none'; this.parentElement.innerHTML='BL';">
+                    </div>
+                    <div class="team-name">Bruno Lutiano</div>
+                    <div class="team-title" id="title-bruno">Cyber Threat Intelligence Researcher – CISSA/CESAR | Post-graduate's Student – ADINT School | Certified Ethical Hacker Master</div>
+                    <div class="team-description" id="desc-bruno">Military Police Officer of the State of São Paulo, with a strategic focus on ICT infrastructure and management, cyber vulnerability assessment, server hardening, innovation projects, and cyber intelligence.</div>
+                    <a href="https://www.linkedin.com/in/bruno-lutiano/" target="_blank" class="team-linkedin" id="linkedin-bruno">LinkedIn</a>
+                </div>
+                
+                <!-- Evelin -->
+                <div class="team-card">
+                    <div class="team-photo" id="photo-evelin">
+                        <img src="team_photos/evelin.jpg" alt="Evelin Limeira" onerror="this.style.display='none'; this.parentElement.innerHTML='EL';">
+                    </div>
+                    <div class="team-name">Evelin Limeira</div>
+                    <div class="team-title" id="title-evelin">MSc Candidate in Software Engineering | Cybersecurity Researcher at CISSA | FullStack at ALPB | Java | Angular</div>
+                    <div class="team-description" id="desc-evelin">With experience in law and background in technology, I currently work in the Legislative Power's Systems Development sector. My goal is to combine legal knowledge with technology to create innovative and efficient solutions.</div>
+                    <a href="https://www.linkedin.com/in/evelin-limeira/" target="_blank" class="team-linkedin" id="linkedin-evelin">LinkedIn</a>
+                </div>
+                
+                <!-- Pedro -->
+                <div class="team-card">
+                    <div class="team-photo" id="photo-pedro">
+                        <img src="team_photos/pedro.jpg" alt="Pedro Falcão" onerror="this.style.display='none'; this.parentElement.innerHTML='PF';">
+                    </div>
+                    <div class="team-name">Pedro Falcão</div>
+                    <div class="team-title" id="title-pedro">QA Senior | SDET Senior | QA Staff | QA Lead | QA Automation</div>
+                    <div class="team-description" id="desc-pedro">Software Quality Engineer with extensive experience in test automation, DevOps and quality assurance, having worked for companies such as Moray Lab, Pitang and Inmetrics.</div>
+                    <a href="https://www.linkedin.com/in/pedrofalcaom/" target="_blank" class="team-linkedin" id="linkedin-pedro">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-text" id="footer-text" data-testid="footer-text">
+                Trabalho do Curso de Mestrado de Engenharia de Software 2025.1 - C.E.S.A.R<br>
+                <strong>MorayLab</strong> - Todos os direitos reservados
+            </div>
+            <div class="footer-year" id="footer-year" data-testid="footer-year">
+                © 2025
+            </div>
+        </div>
+    </footer>
+
 </body>
 </html>

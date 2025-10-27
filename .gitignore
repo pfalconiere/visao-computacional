@@ -60,3 +60,33 @@ htmlcov/
 
 # OS
 Thumbs.db
+
+# Arquivos de otimização e treinamento
+otimizar_*.py
+continuar_otimizacao.py
+treinar_classificador.py
+processar_todas.py
+classificador_final_v2.py
+melhor_modelo*.json
+otimizacao*.json
+training_data.pkl
+
+# Arquivos temporários
+index-temp.html
+index-github-pages.html
+*-temp.*
+*.log
+
+# Scripts de desenvolvimento
+start.sh
+stop.sh
+servidor_web.py
+testar_api.py
+
+# Documentação redundante
+DEPLOY_*.md
+GITHUB_PUSH.md
+docs/
+*.pid
+feedback_data.csv
+.cache_ocr/
