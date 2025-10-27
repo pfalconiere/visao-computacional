@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Updated: 2025-10-27 11:25:00 - v9 - TEAM BIOS + DESCRIPTIONS -->
+<!-- Updated: 2025-10-27 11:35:00 - v11 - REDUCED SPACING + FIX TRANSLATIONS -->
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -88,7 +88,7 @@
             flex: 1;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 80px 22px 100px;
+            padding: 40px 22px 40px;
             width: 100%;
         }
 
@@ -875,7 +875,7 @@
         .team-linkedin {
             display: inline-block;
             padding: 10px 24px;
-            background: #0077b5;
+            background: #1d1d1f;
             color: white;
             text-decoration: none;
             border-radius: 980px;
@@ -885,7 +885,7 @@
         }
 
         .team-linkedin:hover {
-            background: #006399;
+            background: #424245;
             transform: scale(1.05);
         }
     
@@ -1099,6 +1099,10 @@
                 teamButton: 'Time',
                 teamTitle: 'Nosso Time',
                 teamSubtitle: 'Conheça as pessoas por trás do projeto',
+                teamDescAna: 'Engenheira de Software com 8+ anos de experiência especializada em sistemas escaláveis e de alto desempenho usando JavaScript, Node.js e Java. Habilidosa em Arquiteturas Monolíticas, Microserviços e Serverless, entregando soluções personalizadas e eficientes.',
+                teamDescBruno: 'Oficial da Polícia Militar do Estado de São Paulo, com foco estratégico em infraestrutura e gestão de TIC, avaliação de vulnerabilidades cibernéticas, hardening de servidores, projetos de inovação e inteligência cibernética.',
+                teamDescEvelin: 'Com experiência em direito e formação em tecnologia, atualmente trabalho no setor de Desenvolvimento de Sistemas do Poder Legislativo. Meu objetivo é combinar conhecimento jurídico com tecnologia para criar soluções inovadoras e eficientes.',
+                teamDescPedro: 'Engenheiro de Qualidade de Software com ampla experiência em automação de testes, DevOps e garantia de qualidade, tendo trabalhado para empresas como Moray Lab, Pitang e Inmetrics.',
                                 configTitle: 'Configurar Regras de Conformidade',
                 labelMinWords: 'Mínimo de Palavras',
                 labelMinParagraphs: 'Mínimo de Parágrafos',
@@ -1146,6 +1150,10 @@
                 teamButton: 'Team',
                 teamTitle: 'Our Team',
                 teamSubtitle: 'Meet the people behind the project',
+                teamDescAna: 'Software Engineer with 8+ years of experience specializing in scalable, high-performance systems using JavaScript, Node.js, Java, and Java. Skilled in Monolithic, Microservices, and Serverless Architectures, delivering tailored and efficient solutions.',
+                teamDescBruno: 'Military Police Officer of the State of São Paulo, with a strategic focus on ICT infrastructure and management, cyber vulnerability assessment, server hardening, innovation projects, and cyber intelligence.',
+                teamDescEvelin: 'With experience in law and background in technology, I currently work in the Legislative Power\'s Systems Development sector. My goal is to combine legal knowledge with technology to create innovative and efficient solutions.',
+                teamDescPedro: 'Software Quality Engineer with extensive experience in test automation, DevOps and quality assurance, having worked for companies such as Moray Lab, Pitang and Inmetrics.',
                                 configTitle: 'Configure Compliance Rules',
                 labelMinWords: 'Minimum Words',
                 labelMinParagraphs: 'Minimum Paragraphs',
@@ -1178,6 +1186,10 @@
             document.getElementById('team-btn-text').textContent = t.teamButton;
             document.getElementById('team-title').textContent = t.teamTitle;
             document.getElementById('team-subtitle').textContent = t.teamSubtitle;
+            document.getElementById('desc-ana').textContent = t.teamDescAna;
+            document.getElementById('desc-bruno').textContent = t.teamDescBruno;
+            document.getElementById('desc-evelin').textContent = t.teamDescEvelin;
+            document.getElementById('desc-pedro').textContent = t.teamDescPedro;
             updateModalTexts();
                         
             const buttons = document.querySelectorAll('.feedback-btn');
@@ -1494,7 +1506,6 @@
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('team-page').classList.add('active');
             currentPage = 'team';
-            loadLinkedInPhotos();
             window.scrollTo(0, 0);
         }
 
@@ -1503,26 +1514,6 @@
             document.getElementById('main-content').classList.remove('hidden');
             currentPage = 'main';
             window.scrollTo(0, 0);
-        }
-
-        // Carregar fotos do LinkedIn
-        function loadLinkedInPhotos() {
-            const teamMembers = [
-                { id: 'ana', username: 'ana-paula-barros-2a452190' },
-                { id: 'bruno', username: 'bruno-lutiano' },
-                { id: 'evelin', username: 'evelin-limeira' },
-                { id: 'pedro', username: 'pedrofalcaom' }
-            ];
-
-            teamMembers.forEach(member => {
-                // Tentar usar proxy de imagem do LinkedIn
-                const proxyUrl = `https://unavatar.io/linkedin/${member.username}`;
-                const img = document.querySelector(`#photo-${member.id} img`);
-                
-                if (img && !img.src) {
-                    img.src = proxyUrl;
-                }
-            });
         }
 
         // Fechar modal ao clicar fora
@@ -1688,45 +1679,45 @@
                 <!-- Ana Paula -->
                 <div class="team-card">
                     <div class="team-photo" id="photo-ana">
-                        <img src="" alt="Ana Paula Barros" onerror="this.style.display='none'; this.parentElement.innerHTML='AP';">
+                        <img src="team_photos/ana.jpg" alt="Ana Paula Barros" onerror="this.style.display='none'; this.parentElement.innerHTML='AP';">
                     </div>
                     <div class="team-name">Ana Paula Barros</div>
                     <div class="team-title" id="title-ana">Software Engineer</div>
                     <div class="team-description" id="desc-ana">Software Engineer with 8+ years of experience specializing in scalable, high-performance systems using JavaScript, Node.js, Java, and Java. Skilled in Monolithic, Microservices, and Serverless Architectures, delivering tailored and efficient solutions.</div>
-                    <a href="https://www.linkedin.com/in/ana-paula-barros-2a452190/" target="_blank" class="team-linkedin">LinkedIn</a>
+                    <a href="https://www.linkedin.com/in/ana-paula-barros-2a452190/" target="_blank" class="team-linkedin" id="linkedin-ana">LinkedIn</a>
                 </div>
                 
                 <!-- Bruno -->
                 <div class="team-card">
                     <div class="team-photo" id="photo-bruno">
-                        <img src="" alt="Bruno Lutiano" onerror="this.style.display='none'; this.parentElement.innerHTML='BL';">
+                        <img src="team_photos/bruno.jpg" alt="Bruno Lutiano" onerror="this.style.display='none'; this.parentElement.innerHTML='BL';">
                     </div>
                     <div class="team-name">Bruno Lutiano</div>
                     <div class="team-title" id="title-bruno">Cyber Threat Intelligence Researcher – CISSA/CESAR | Post-graduate's Student – ADINT School | Certified Ethical Hacker Master</div>
                     <div class="team-description" id="desc-bruno">Military Police Officer of the State of São Paulo, with a strategic focus on ICT infrastructure and management, cyber vulnerability assessment, server hardening, innovation projects, and cyber intelligence.</div>
-                    <a href="https://www.linkedin.com/in/bruno-lutiano/" target="_blank" class="team-linkedin">LinkedIn</a>
+                    <a href="https://www.linkedin.com/in/bruno-lutiano/" target="_blank" class="team-linkedin" id="linkedin-bruno">LinkedIn</a>
                 </div>
                 
                 <!-- Evelin -->
                 <div class="team-card">
                     <div class="team-photo" id="photo-evelin">
-                        <img src="" alt="Evelin Limeira" onerror="this.style.display='none'; this.parentElement.innerHTML='EL';">
+                        <img src="team_photos/evelin.jpg" alt="Evelin Limeira" onerror="this.style.display='none'; this.parentElement.innerHTML='EL';">
                     </div>
                     <div class="team-name">Evelin Limeira</div>
                     <div class="team-title" id="title-evelin">MSc Candidate in Software Engineering | Cybersecurity Researcher at CISSA | FullStack at ALPB | Java | Angular</div>
                     <div class="team-description" id="desc-evelin">With experience in law and background in technology, I currently work in the Legislative Power's Systems Development sector. My goal is to combine legal knowledge with technology to create innovative and efficient solutions.</div>
-                    <a href="https://www.linkedin.com/in/evelin-limeira/" target="_blank" class="team-linkedin">LinkedIn</a>
+                    <a href="https://www.linkedin.com/in/evelin-limeira/" target="_blank" class="team-linkedin" id="linkedin-evelin">LinkedIn</a>
                 </div>
                 
                 <!-- Pedro -->
                 <div class="team-card">
                     <div class="team-photo" id="photo-pedro">
-                        <img src="" alt="Pedro Falcão" onerror="this.style.display='none'; this.parentElement.innerHTML='PF';">
+                        <img src="team_photos/pedro.jpg" alt="Pedro Falcão" onerror="this.style.display='none'; this.parentElement.innerHTML='PF';">
                     </div>
                     <div class="team-name">Pedro Falcão</div>
                     <div class="team-title" id="title-pedro">QA Senior | SDET Senior | QA Staff | QA Lead | QA Automation</div>
                     <div class="team-description" id="desc-pedro">Software Quality Engineer with extensive experience in test automation, DevOps and quality assurance, having worked for companies such as Moray Lab, Pitang and Inmetrics.</div>
-                    <a href="https://www.linkedin.com/in/pedrofalcaom/" target="_blank" class="team-linkedin">LinkedIn</a>
+                    <a href="https://www.linkedin.com/in/pedrofalcaom/" target="_blank" class="team-linkedin" id="linkedin-pedro">LinkedIn</a>
                 </div>
             </div>
         </div>
