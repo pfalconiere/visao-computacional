@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Updated: 2025-10-27 11:35:00 - v11 - REDUCED SPACING + FIX TRANSLATIONS -->
+<!-- Updated: 2025-10-27 15:30:00 - v12 - ASYNC MODE + PROGRESS BAR -->
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -521,6 +521,47 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+            display: none;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0071e3 0%, #0051a8 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 14px;
+            color: #6e6e73;
+        }
+
+        .progress-percent {
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
         .error {
             display: none;
             background: #fff3cd;
@@ -997,6 +1038,15 @@
         <div class="loading" id="loading" data-testid="loading">
             <div class="spinner"></div>
             <p id="loading-text">Analisando documento...</p>
+            <div class="progress-container" id="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="progress-text">
+                    <span class="progress-percent" id="progress-percent">0%</span>
+                    <span id="progress-status">Iniciando...</span>
+                </div>
+            </div>
         </div>
 
         <div class="result-section" id="result-section" data-testid="result-section">
@@ -1103,6 +1153,11 @@
                 teamDescBruno: 'Oficial da Polícia Militar do Estado de São Paulo, com foco estratégico em infraestrutura e gestão de TIC, avaliação de vulnerabilidades cibernéticas, hardening de servidores, projetos de inovação e inteligência cibernética.',
                 teamDescEvelin: 'Com experiência em direito e formação em tecnologia, atualmente trabalho no setor de Desenvolvimento de Sistemas do Poder Legislativo. Meu objetivo é combinar conhecimento jurídico com tecnologia para criar soluções inovadoras e eficientes.',
                 teamDescPedro: 'Engenheiro de Qualidade de Software com ampla experiência em automação de testes, DevOps e garantia de qualidade, tendo trabalhado para empresas como Moray Lab, Pitang e Inmetrics.',
+                progressInitializing: 'Iniciando...',
+                progressAnalyzing: 'Analisando estrutura...',
+                progressClassifying: 'Classificando...',
+                progressOCR: 'Processando texto (pode demorar)...',
+                progressFinalizing: 'Finalizando...',
                                 configTitle: 'Configurar Regras de Conformidade',
                 labelMinWords: 'Mínimo de Palavras',
                 labelMinParagraphs: 'Mínimo de Parágrafos',
@@ -1154,6 +1209,11 @@
                 teamDescBruno: 'Military Police Officer of the State of São Paulo, with a strategic focus on ICT infrastructure and management, cyber vulnerability assessment, server hardening, innovation projects, and cyber intelligence.',
                 teamDescEvelin: 'With experience in law and background in technology, I currently work in the Legislative Power\'s Systems Development sector. My goal is to combine legal knowledge with technology to create innovative and efficient solutions.',
                 teamDescPedro: 'Software Quality Engineer with extensive experience in test automation, DevOps and quality assurance, having worked for companies such as Moray Lab, Pitang and Inmetrics.',
+                progressInitializing: 'Initializing...',
+                progressAnalyzing: 'Analyzing structure...',
+                progressClassifying: 'Classifying...',
+                progressOCR: 'Processing text (may take a while)...',
+                progressFinalizing: 'Finalizing...',
                                 configTitle: 'Configure Compliance Rules',
                 labelMinWords: 'Minimum Words',
                 labelMinParagraphs: 'Minimum Paragraphs',
@@ -1284,12 +1344,16 @@
             }
         }
 
+        let pollingInterval = null;
+
         async function classifyImage() {
             if (!currentFile) return;
 
             hideError();
             document.getElementById('preview-section').classList.remove('show');
             document.getElementById('loading').classList.add('show');
+            document.getElementById('progress-container').classList.add('show');
+            updateProgress(0, translations[currentLang].progressInitializing);
 
             const formData = new FormData();
             formData.append('image', currentFile);
@@ -1297,6 +1361,39 @@
             formData.append('min_paragraphs', minParagraphs);
             formData.append('language', currentLang);
 
+            try {
+                // Tentar endpoint assíncrono primeiro
+                const response = await fetch(`${API_URL}/classify/async`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.status === 503 || !data.task_id) {
+                    // Fallback para endpoint síncrono
+                    console.log('Usando modo síncrono (fallback)');
+                    await classifySync(formData);
+                    return;
+                }
+
+                if (data.success && data.task_id) {
+                    // Modo assíncrono: fazer polling
+                    await pollTaskStatus(data.task_id);
+                } else {
+                    throw new Error(data.error || 'Classification failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError(translations[currentLang].errorClassify);
+                document.getElementById('preview-section').classList.add('show');
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('progress-container').classList.remove('show');
+            }
+        }
+
+        async function classifySync(formData) {
+            // Modo síncrono (fallback se Celery não estiver disponível)
             try {
                 const response = await fetch(`${API_URL}/classify`, {
                     method: 'POST',
@@ -1318,7 +1415,78 @@
                 document.getElementById('preview-section').classList.add('show');
             } finally {
                 document.getElementById('loading').classList.remove('show');
+                document.getElementById('progress-container').classList.remove('show');
             }
+        }
+
+        async function pollTaskStatus(taskId) {
+            const t = translations[currentLang];
+            let attempts = 0;
+            const maxAttempts = 150; // 5 minutos (2s * 150)
+
+            const poll = async () => {
+                try {
+                    const response = await fetch(`${API_URL}/task/${taskId}`);
+                    const data = await response.json();
+
+                    attempts++;
+
+                    // Atualizar progress bar
+                    const progress = data.progress || 0;
+                    let statusText = data.status || t.progressInitializing;
+                    
+                    // Traduzir status genéricos
+                    if (statusText.includes('Iniciando') || statusText.includes('Initializing')) {
+                        statusText = t.progressInitializing;
+                    } else if (statusText.includes('estrutura') || statusText.includes('structure')) {
+                        statusText = t.progressAnalyzing;
+                    } else if (statusText.includes('Classificando') || statusText.includes('Classifying')) {
+                        statusText = t.progressClassifying;
+                    } else if (statusText.includes('OCR') || statusText.includes('texto') || statusText.includes('text')) {
+                        statusText = t.progressOCR;
+                    } else if (statusText.includes('Finalizando') || statusText.includes('Finalizing')) {
+                        statusText = t.progressFinalizing;
+                    }
+
+                    updateProgress(progress, statusText);
+
+                    if (data.state === 'SUCCESS') {
+                        // Tarefa concluída!
+                        clearInterval(pollingInterval);
+                        currentClassification = data.result;
+                        feedbackSent = false;
+                        displayResult(data.result);
+                        document.getElementById('loading').classList.remove('show');
+                        document.getElementById('progress-container').classList.remove('show');
+                    } else if (data.state === 'FAILURE') {
+                        // Erro na tarefa
+                        clearInterval(pollingInterval);
+                        throw new Error(data.error || 'Task failed');
+                    } else if (attempts >= maxAttempts) {
+                        // Timeout
+                        clearInterval(pollingInterval);
+                        throw new Error('Timeout: tarefa demorou muito');
+                    }
+                    // PENDING ou PROGRESS: continuar polling
+                } catch (error) {
+                    clearInterval(pollingInterval);
+                    console.error('Polling error:', error);
+                    showError(translations[currentLang].errorClassify);
+                    document.getElementById('preview-section').classList.add('show');
+                    document.getElementById('loading').classList.remove('show');
+                    document.getElementById('progress-container').classList.remove('show');
+                }
+            };
+
+            // Iniciar polling a cada 2 segundos
+            pollingInterval = setInterval(poll, 2000);
+            poll(); // Chamar imediatamente também
+        }
+
+        function updateProgress(percent, statusText) {
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-percent').textContent = percent + '%';
+            document.getElementById('progress-status').textContent = ' - ' + statusText;
         }
 
         function displayResult(data) {
