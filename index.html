@@ -1158,6 +1158,7 @@
                 progressClassifying: 'Classificando...',
                 progressOCR: 'Processando texto (pode demorar)...',
                 progressFinalizing: 'Finalizando...',
+                progressPending: 'Tarefa aguardando processamento...',
                                 configTitle: 'Configurar Regras de Conformidade',
                 labelMinWords: 'Mínimo de Palavras',
                 labelMinParagraphs: 'Mínimo de Parágrafos',
@@ -1214,6 +1215,7 @@
                 progressClassifying: 'Classifying...',
                 progressOCR: 'Processing text (may take a while)...',
                 progressFinalizing: 'Finalizing...',
+                progressPending: 'Task waiting for processing...',
                                 configTitle: 'Configure Compliance Rules',
                 labelMinWords: 'Minimum Words',
                 labelMinParagraphs: 'Minimum Paragraphs',
@@ -1436,7 +1438,9 @@
                     let statusText = data.status || t.progressInitializing;
                     
                     // Traduzir status genéricos
-                    if (statusText.includes('Iniciando') || statusText.includes('Initializing')) {
+                    if (statusText.includes('aguardando') || statusText.includes('waiting') || data.state === 'PENDING') {
+                        statusText = t.progressPending;
+                    } else if (statusText.includes('Iniciando') || statusText.includes('Initializing')) {
                         statusText = t.progressInitializing;
                     } else if (statusText.includes('estrutura') || statusText.includes('structure')) {
                         statusText = t.progressAnalyzing;
