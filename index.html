@@ -385,6 +385,26 @@
             font-weight: 600;
         }
 
+        .stats-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            background: transparent;
+            padding: 0;
+            font-size: 15px;
+            color: #1d1d1f;
+            text-align: left;
+        }
+
+        .stat-item strong {
+            font-weight: 600;
+        }
+
         /* Feedback Section */
         .feedback-section {
             background: transparent;
@@ -1175,21 +1195,27 @@
                 featuresGrid.appendChild(explanationDiv);
             }
 
-            // Mostrar parágrafos apenas para artigos científicos
+            // Mostrar parágrafos e palavras lado a lado (apenas para artigos científicos)
             if (!isAd && data.num_paragraphs !== undefined) {
-                const paragraphDiv = document.createElement('div');
-                paragraphDiv.className = 'paragraph-count';
-                paragraphDiv.innerHTML = `<strong>${t.paragraphs}:</strong> ${data.num_paragraphs}`;
-                featuresGrid.appendChild(paragraphDiv);
+                const statsContainer = document.createElement('div');
+                statsContainer.className = 'stats-container';
                 
-                // Mostrar número de palavras logo abaixo
+                // Parágrafos
+                const paragraphDiv = document.createElement('div');
+                paragraphDiv.className = 'stat-item';
+                paragraphDiv.innerHTML = `<strong>${t.paragraphs}:</strong> ${data.num_paragraphs}`;
+                statsContainer.appendChild(paragraphDiv);
+                
+                // Palavras
                 if (data.word_count !== undefined) {
                     const wordCountDiv = document.createElement('div');
-                    wordCountDiv.className = 'paragraph-count';
+                    wordCountDiv.className = 'stat-item';
                     const wordLabel = currentLang === 'pt' ? 'Palavras' : 'Words';
                     wordCountDiv.innerHTML = `<strong>${wordLabel}:</strong> ${data.word_count}`;
-                    featuresGrid.appendChild(wordCountDiv);
+                    statsContainer.appendChild(wordCountDiv);
                 }
+                
+                featuresGrid.appendChild(statsContainer);
             }
 
             // Mostrar análise de texto (apenas para artigos científicos)
@@ -1412,20 +1438,20 @@
                 explanationDiv.innerHTML = newExplanation.replace(/(\d+)/g, '<strong>$1</strong>');
             }
             
-            // Atualizar label de parágrafos
-            const allParagraphDivs = document.querySelectorAll('.paragraph-count');
-            if (allParagraphDivs.length > 0 && currentFullResult.num_paragraphs) {
+            // Atualizar label de parágrafos e palavras
+            const allStatItems = document.querySelectorAll('.stat-item');
+            if (allStatItems.length > 0 && currentFullResult.num_paragraphs) {
                 const t = translations[currentLang];
                 const wordLabel = currentLang === 'pt' ? 'Palavras' : 'Words';
                 
                 // Primeiro div é parágrafos
-                if (allParagraphDivs[0]) {
-                    allParagraphDivs[0].innerHTML = `<strong>${t.paragraphs}:</strong> ${currentFullResult.num_paragraphs}`;
+                if (allStatItems[0]) {
+                    allStatItems[0].innerHTML = `<strong>${t.paragraphs}:</strong> ${currentFullResult.num_paragraphs}`;
                 }
                 
                 // Segundo div é palavras (se existir)
-                if (allParagraphDivs[1] && currentFullResult.word_count) {
-                    allParagraphDivs[1].innerHTML = `<strong>${wordLabel}:</strong> ${currentFullResult.word_count}`;
+                if (allStatItems[1] && currentFullResult.word_count) {
+                    allStatItems[1].innerHTML = `<strong>${wordLabel}:</strong> ${currentFullResult.word_count}`;
                 }
             }
             
