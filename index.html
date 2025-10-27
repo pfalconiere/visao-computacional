@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Updated: 2025-10-27 16:00:00 - v13 - ASYNC + TRANSLATIONS FIX -->
+<!-- Updated: 2025-10-27 16:10:00 - v14 - PROGRESS BAR i18n FIX -->
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -1259,6 +1259,25 @@
             if (buttons[1]) buttons[1].innerHTML = t.feedbackIncorrect;
             
             document.getElementById('footer-text').innerHTML = t.footerText;
+            
+            // Atualizar texto do progress bar se estiver visível
+            const progressStatus = document.getElementById('progress-status');
+            if (progressStatus && progressStatus.textContent) {
+                const currentText = progressStatus.textContent.toLowerCase();
+                if (currentText.includes('aguardando') || currentText.includes('waiting')) {
+                    progressStatus.textContent = t.progressPending;
+                } else if (currentText.includes('iniciando') || currentText.includes('initializing')) {
+                    progressStatus.textContent = t.progressInitializing;
+                } else if (currentText.includes('estrutura') || currentText.includes('structure') || currentText.includes('analiz')) {
+                    progressStatus.textContent = t.progressAnalyzing;
+                } else if (currentText.includes('classificando') || currentText.includes('classifying')) {
+                    progressStatus.textContent = t.progressClassifying;
+                } else if (currentText.includes('ocr') || currentText.includes('texto') || currentText.includes('text') || currentText.includes('processing')) {
+                    progressStatus.textContent = t.progressOCR;
+                } else if (currentText.includes('finalizando') || currentText.includes('finalizing')) {
+                    progressStatus.textContent = t.progressFinalizing;
+                }
+            }
             
             updateExplanationLanguage();
         }
