@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Updated: 2025-10-27 11:00:00 - CACHE BREAK v5 - MORAYLAB TRANSLATIONS FIXED -->
+<!-- Updated: 2025-10-27 11:10:00 - v6 - TEAM PAGE ADDED -->
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -764,6 +764,130 @@
             background: #424245;
         }
 
+        /* Team Page Styles */
+        .team-page {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fbfbfd;
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .team-page.active {
+            display: block;
+        }
+
+        .team-header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .team-header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .team-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1d1d1f;
+        }
+
+        .close-team-btn {
+            padding: 8px 20px;
+            background: #1d1d1f;
+            color: white;
+            border: none;
+            border-radius: 980px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .close-team-btn:hover {
+            background: #424245;
+        }
+
+        .team-container {
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 22px;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 32px;
+            margin-top: 40px;
+        }
+
+        .team-card {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 18px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .team-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .team-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 600;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .team-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 12px;
+        }
+
+        .team-linkedin {
+            display: inline-block;
+            padding: 10px 24px;
+            background: #0077b5;
+            color: white;
+            text-decoration: none;
+            border-radius: 980px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .team-linkedin:hover {
+            background: #006399;
+            transform: scale(1.05);
+        }
     
         .api-link {
             padding: 6px 16px;
@@ -824,6 +948,9 @@
                 <a href="${API_URL}/api/docs" target="_blank" class="api-link" data-testid="api-link" id="api-link">API</a>
                 <button class="rule-button" data-testid="rule-button" id="rule-button" onclick="openRuleModal()">
                     <span id="rule-btn-text">Alterar Regra</span>
+                </button>
+                <button class="rule-button" data-testid="team-button" id="team-button" onclick="openTeamPage()">
+                    <span id="team-btn-text">Time</span>
                 </button>
                 <div class="lang-toggle" data-testid="lang-toggle" onclick="toggleLanguage()">
                     <span id="lang-pt" class="active" data-testid="lang-pt">PT</span>
@@ -969,6 +1096,9 @@
                 modalLabelParagraphs: 'Mínimo de Parágrafos',
                 modalCancel: 'Cancelar',
                 modalConfirm: 'Confirmar',
+                teamButton: 'Time',
+                teamTitle: 'Time',
+                closeTeam: 'Fechar',
                                 configTitle: 'Configurar Regras de Conformidade',
                 labelMinWords: 'Mínimo de Palavras',
                 labelMinParagraphs: 'Mínimo de Parágrafos',
@@ -1013,6 +1143,9 @@
                 modalLabelParagraphs: 'Minimum Paragraphs',
                 modalCancel: 'Cancel',
                 modalConfirm: 'Confirm',
+                teamButton: 'Team',
+                teamTitle: 'Team',
+                closeTeam: 'Close',
                                 configTitle: 'Configure Compliance Rules',
                 labelMinWords: 'Minimum Words',
                 labelMinParagraphs: 'Minimum Paragraphs',
@@ -1042,6 +1175,9 @@
             document.getElementById('result-preview-title').textContent = t.resultPreviewTitle;
             document.getElementById('feedback-title').textContent = t.feedbackTitle;
             document.getElementById('rule-btn-text').textContent = t.changeRule;
+            document.getElementById('team-btn-text').textContent = t.teamButton;
+            document.getElementById('team-title').textContent = t.teamTitle;
+            document.getElementById('close-team-text').textContent = t.closeTeam;
             updateModalTexts();
                         
             const buttons = document.querySelectorAll('.feedback-btn');
@@ -1351,6 +1487,17 @@
             document.getElementById('modal-btn-confirm').textContent = t.modalConfirm;
         }
 
+        // Funções da Página Team
+        function openTeamPage() {
+            document.getElementById('team-page').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTeamPage() {
+            document.getElementById('team-page').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
         // Fechar modal ao clicar fora
         document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('rule-modal');
@@ -1504,6 +1651,49 @@
         </div>
     </div>
 
+
+    <!-- Team Page -->
+    <div class="team-page" id="team-page">
+        <div class="team-header">
+            <div class="team-header-content">
+                <h1 class="team-title" id="team-title">Time</h1>
+                <button class="close-team-btn" onclick="closeTeamPage()">
+                    <span id="close-team-text">Fechar</span>
+                </button>
+            </div>
+        </div>
+        <div class="team-container">
+            <div class="team-grid">
+                <!-- Ana Paula -->
+                <div class="team-card">
+                    <div class="team-photo">AP</div>
+                    <div class="team-name">Ana Paula Barros</div>
+                    <a href="https://www.linkedin.com/in/ana-paula-barros-2a452190/" target="_blank" class="team-linkedin">LinkedIn</a>
+                </div>
+                
+                <!-- Bruno -->
+                <div class="team-card">
+                    <div class="team-photo">BL</div>
+                    <div class="team-name">Bruno Lutiano</div>
+                    <a href="https://www.linkedin.com/in/bruno-lutiano/" target="_blank" class="team-linkedin">LinkedIn</a>
+                </div>
+                
+                <!-- Evelin -->
+                <div class="team-card">
+                    <div class="team-photo">EL</div>
+                    <div class="team-name">Evelin Limeira</div>
+                    <a href="https://www.linkedin.com/in/evelin-limeira/" target="_blank" class="team-linkedin">LinkedIn</a>
+                </div>
+                
+                <!-- Pedro -->
+                <div class="team-card">
+                    <div class="team-photo">PF</div>
+                    <div class="team-name">Pedro Falcão</div>
+                    <a href="https://www.linkedin.com/in/pedrofalcaom/" target="_blank" class="team-linkedin">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer>
