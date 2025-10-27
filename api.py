@@ -8,8 +8,6 @@ sys.stdout = sys.stderr  # Força prints irem para stderr (que o Flask mostra)
 
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-from flasgger import Swagger, swag_from
-from swagger_docs import *
 from classificador_final import ClassificadorFinal
 from pathlib import Path
 import tempfile
@@ -60,58 +58,6 @@ CORS(app, resources={
     }
 })
 
-# Configuração do Swagger
-swagger_config = {
-    "headers": [],
-    "specs": [
-        {
-            "endpoint": 'apispec',
-            "route": '/apispec.json',
-            "rule_filter": lambda rule: True,
-            "model_filter": lambda tag: True,
-        }
-    ],
-    "static_url_path": "/flasgger_static",
-    "swagger_ui": True,
-    "specs_route": "/api/docs"
-}
-
-swagger_template = {
-    "swagger": "2.0",
-    "info": {
-        "title": "Document Classifier API",
-        "description": "API REST para classificação de documentos RVL-CDIP (Advertisement vs Scientific Article) com OCR e análise de texto",
-        "version": "2.0.0",
-        "contact": {
-            "name": "Document Classifier",
-            "url": "https://github.com/pfalconiere/visao-computacional"
-        }
-    },
-    "host": "localhost:5000",
-    "basePath": "/",
-    "schemes": ["http", "https"],
-    "tags": [
-        {
-            "name": "Health",
-            "description": "Endpoints de status e saúde da API"
-        },
-        {
-            "name": "Classification",
-            "description": "Endpoints de classificação de documentos"
-        },
-        {
-            "name": "Feedback",
-            "description": "Endpoints de feedback do usuário"
-        },
-        {
-            "name": "Statistics",
-            "description": "Endpoints de estatísticas do modelo"
-        }
-    ]
-}
-
-swagger = Swagger(app, config=swagger_config, template=swagger_template)
-
 # Inicializar classificador
 print("🔄 Carregando classificador...")
 classifier = ClassificadorFinal()
@@ -156,8 +102,7 @@ def home():
                 'GET /stats': 'Estatísticas do modelo',
                 'POST /classify': 'Classifica imagem (apenas .tif/.tiff)',
                 'POST /feedback': 'Envia feedback sobre classificação',
-                'GET /feedback/stats': 'Estatísticas de feedback',
-                'GET /api/docs': 'Documentação Swagger interativa'
+                'GET /feedback/stats': 'Estatísticas de feedback'
             }
         })
 
@@ -170,7 +115,6 @@ def favicon():
         return '', 404
 
 @app.route('/api-info', methods=['GET'])
-@swag_from(home_docs)
 def api_info():
     """Informações da API"""
     return jsonify({
@@ -183,13 +127,11 @@ def api_info():
             'GET /stats': 'Estatísticas do modelo',
             'POST /classify': 'Classifica imagem (apenas .tif/.tiff)',
             'POST /feedback': 'Envia feedback sobre classificação',
-            'GET /feedback/stats': 'Estatísticas de feedback',
-            'GET /api/docs': 'Documentação Swagger interativa'
+            'GET /feedback/stats': 'Estatísticas de feedback'
         }
     })
 
 @app.route('/health', methods=['GET'])
-@swag_from(health_docs)
 def health():
     """Verifica se a API está funcionando"""
     return jsonify({
@@ -198,7 +140,6 @@ def health():
     })
 
 @app.route('/stats', methods=['GET'])
-@swag_from(stats_docs)
 def stats():
     """Retorna estatísticas do modelo"""
     return jsonify({
@@ -224,7 +165,6 @@ def stats():
     })
 
 @app.route('/classify', methods=['POST'])
-@swag_from(classify_docs)
 def classify():
     """Classifica uma imagem"""
     
@@ -497,7 +437,6 @@ def get_task_status(task_id):
 
 
 @app.route('/feedback', methods=['POST'])
-@swag_from(feedback_post_docs)
 def feedback():
     """
     Endpoint para receber feedback do usuário sobre a classificação
@@ -551,7 +490,6 @@ def feedback():
         }), 500
 
 @app.route('/feedback/stats', methods=['GET'])
-@swag_from(feedback_stats_docs)
 def feedback_stats():
     """
     Retorna estatísticas dos feedbacks coletados
