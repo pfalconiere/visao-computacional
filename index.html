@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Updated: 2025-10-27 11:10:00 - v6 - TEAM PAGE ADDED -->
+<!-- Updated: 2025-10-27 11:15:00 - v7 - TEAM PHOTOS + TITLES -->
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -863,13 +863,28 @@
             font-weight: 600;
             color: white;
             text-transform: uppercase;
+            overflow: hidden;
+            border: 3px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .team-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .team-name {
             font-size: 20px;
             font-weight: 600;
             color: #1d1d1f;
-            margin-bottom: 12px;
+            margin-bottom: 4px;
+        }
+
+        .team-title {
+            font-size: 14px;
+            color: #6e6e73;
+            margin-bottom: 16px;
+            font-weight: 400;
         }
 
         .team-linkedin {
@@ -1491,11 +1506,32 @@
         function openTeamPage() {
             document.getElementById('team-page').classList.add('active');
             document.body.style.overflow = 'hidden';
+            loadLinkedInPhotos();
         }
 
         function closeTeamPage() {
             document.getElementById('team-page').classList.remove('active');
             document.body.style.overflow = 'auto';
+        }
+
+        // Carregar fotos do LinkedIn
+        function loadLinkedInPhotos() {
+            const teamMembers = [
+                { id: 'ana', username: 'ana-paula-barros-2a452190' },
+                { id: 'bruno', username: 'bruno-lutiano' },
+                { id: 'evelin', username: 'evelin-limeira' },
+                { id: 'pedro', username: 'pedrofalcaom' }
+            ];
+
+            teamMembers.forEach(member => {
+                // Tentar usar proxy de imagem do LinkedIn
+                const proxyUrl = `https://unavatar.io/linkedin/${member.username}`;
+                const img = document.querySelector(`#photo-${member.id} img`);
+                
+                if (img && !img.src) {
+                    img.src = proxyUrl;
+                }
+            });
         }
 
         // Fechar modal ao clicar fora
@@ -1666,29 +1702,41 @@
             <div class="team-grid">
                 <!-- Ana Paula -->
                 <div class="team-card">
-                    <div class="team-photo">AP</div>
+                    <div class="team-photo" id="photo-ana">
+                        <img src="" alt="Ana Paula Barros" onerror="this.style.display='none'; this.parentElement.innerHTML='AP';">
+                    </div>
                     <div class="team-name">Ana Paula Barros</div>
+                    <div class="team-title" id="title-ana">Software Engineer</div>
                     <a href="https://www.linkedin.com/in/ana-paula-barros-2a452190/" target="_blank" class="team-linkedin">LinkedIn</a>
                 </div>
                 
                 <!-- Bruno -->
                 <div class="team-card">
-                    <div class="team-photo">BL</div>
+                    <div class="team-photo" id="photo-bruno">
+                        <img src="" alt="Bruno Lutiano" onerror="this.style.display='none'; this.parentElement.innerHTML='BL';">
+                    </div>
                     <div class="team-name">Bruno Lutiano</div>
+                    <div class="team-title" id="title-bruno">Software Engineer</div>
                     <a href="https://www.linkedin.com/in/bruno-lutiano/" target="_blank" class="team-linkedin">LinkedIn</a>
                 </div>
                 
                 <!-- Evelin -->
                 <div class="team-card">
-                    <div class="team-photo">EL</div>
+                    <div class="team-photo" id="photo-evelin">
+                        <img src="" alt="Evelin Limeira" onerror="this.style.display='none'; this.parentElement.innerHTML='EL';">
+                    </div>
                     <div class="team-name">Evelin Limeira</div>
+                    <div class="team-title" id="title-evelin">Software Engineer</div>
                     <a href="https://www.linkedin.com/in/evelin-limeira/" target="_blank" class="team-linkedin">LinkedIn</a>
                 </div>
                 
                 <!-- Pedro -->
                 <div class="team-card">
-                    <div class="team-photo">PF</div>
+                    <div class="team-photo" id="photo-pedro">
+                        <img src="" alt="Pedro Falcão" onerror="this.style.display='none'; this.parentElement.innerHTML='PF';">
+                    </div>
                     <div class="team-name">Pedro Falcão</div>
+                    <div class="team-title" id="title-pedro">Software Engineer</div>
                     <a href="https://www.linkedin.com/in/pedrofalcaom/" target="_blank" class="team-linkedin">LinkedIn</a>
                 </div>
             </div>
