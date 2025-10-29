@@ -13,6 +13,31 @@
     <meta name="pragma" content="no-cache" />
     <title>Document Classifier - With Feedback</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1055">
+    
+    <!-- Google Analytics 4 -->
+    <!-- INSTRUÇÕES: Substitua 'G-XXXXXXXXXX' pelo seu Measurement ID -->
+    <!-- Como obter: https://analytics.google.com -> Admin -> Data Streams -> Measurement ID -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        
+        gtag('config', 'G-XXXXXXXXXX', {
+            'anonymize_ip': true,              // LGPD: Anonimiza IPs
+            'cookie_flags': 'SameSite=None;Secure',
+            'send_page_view': true
+        });
+        
+        // Helper para tracking de eventos customizados
+        window.trackEvent = function(eventName, params) {
+            if (typeof gtag !== 'undefined') {
+                gtag('event', eventName, params);
+                console.log('📊 GA Event:', eventName, params);
+            }
+        };
+    </script>
+    
     <script src="https://cdn.jsdelivr.net/npm/tiff.js@latest/tiff.min.js"></script>
     <style>
         * {
@@ -1371,6 +1396,15 @@
             if (!currentFile) return;
 
             hideError();
+            
+            // Google Analytics: Track início da classificação
+            trackEvent('classification_started', {
+                event_category: 'classification',
+                event_label: 'file_uploaded',
+                file_size: currentFile.size,
+                file_type: currentFile.type
+            });
+            
             document.getElementById('preview-section').classList.remove('show');
             document.getElementById('loading').classList.add('show');
             document.getElementById('progress-container').classList.add('show');
@@ -1516,6 +1550,16 @@
             currentFullResult = data;
             const t = translations[currentLang];
             const isAd = data.classification === 'advertisement';
+            
+            // Google Analytics: Track conclusão da classificação
+            trackEvent('classification_completed', {
+                event_category: 'classification',
+                event_label: data.classification,
+                classification_type: data.classification,
+                confidence: data.confidence,
+                word_count: data.word_count || 0,
+                is_compliant: data.is_compliant || false
+            });
 
             document.getElementById('result-preview-img').src = currentPreviewUrl || document.getElementById('preview-image').src;
             document.getElementById('result-file-name').textContent = currentFile.name;
@@ -1603,6 +1647,14 @@
 
         async function sendFeedback(isCorrect) {
             if (feedbackSent) return;
+            
+            // Google Analytics: Track feedback
+            trackEvent('feedback_submitted', {
+                event_category: 'feedback',
+                event_label: isCorrect ? 'correct' : 'incorrect',
+                is_correct: isCorrect,
+                classification: currentClassification.classification
+            });
             
             const t = translations[currentLang];
             const buttons = document.querySelectorAll('.feedback-btn');
@@ -1694,6 +1746,13 @@
         let currentPage = 'main'; // 'main' ou 'team'
         
         function openTeamPage() {
+            // Google Analytics: Track navegação para página do time
+            trackEvent('page_view', {
+                event_category: 'navigation',
+                event_label: 'team_page',
+                page_title: 'Team Page'
+            });
+            
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('team-page').classList.add('active');
             currentPage = 'team';
