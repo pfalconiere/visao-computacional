@@ -1,0 +1,703 @@
+{
+	"info": {
+		"_postman_id": "doc-classifier-collection-001",
+		"name": "Document Classifier API - Tests",
+		"description": "Testes completos para Document Classifier API\n\nInclui:\n- Happy Path (fluxos positivos)\n- Negative Path (erros e validações)\n- Testes de performance\n- Testes de integração",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Checks",
+			"item": [
+				{
+					"name": "[HAPPY] GET /health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// HAPPY PATH: Health check deve retornar sucesso",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has status field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('healthy');",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 500ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						}
+					}
+				},
+				{
+					"name": "[HAPPY] GET /stats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// HAPPY PATH: Stats deve retornar estatísticas do modelo",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has model info\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('model');",
+									"    pm.expect(jsonData).to.have.property('accuracy');",
+									"});",
+									"",
+									"pm.test(\"Accuracy is a valid object\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.accuracy).to.be.an('object');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/stats",
+							"host": ["{{base_url}}"],
+							"path": ["stats"]
+						}
+					}
+				},
+				{
+					"name": "[NEGATIVE] GET /nonexistent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// NEGATIVE PATH: Endpoint inexistente deve retornar 404",
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/nonexistent",
+							"host": ["{{base_url}}"],
+							"path": ["nonexistent"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Classification",
+			"item": [
+				{
+					"name": "[HAPPY] POST /classify - Advertisement",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// HAPPY PATH: Classificação de advertisement",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has classification\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('classification');",
+									"    pm.expect(jsonData).to.have.property('confidence');",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});",
+									"",
+									"pm.test(\"Classification is valid\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.classification).to.be.oneOf(['advertisement', 'scientific_article']);",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 30s\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(30000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "{{test_image_advertisement}}"
+								},
+								{
+									"key": "min_words",
+									"value": "2000",
+									"type": "text"
+								},
+								{
+									"key": "min_paragraphs",
+									"value": "8",
+									"type": "text"
+								},
+								{
+									"key": "language",
+									"value": "pt",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/classify",
+							"host": ["{{base_url}}"],
+							"path": ["classify"]
+						}
+					}
+				},
+				{
+					"name": "[HAPPY] POST /classify - Scientific Article",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// HAPPY PATH: Classificação de artigo científico",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('classification');",
+									"    pm.expect(jsonData).to.have.property('word_count');",
+									"    pm.expect(jsonData).to.have.property('frequent_words');",
+									"    pm.expect(jsonData).to.have.property('is_compliant');",
+									"});",
+									"",
+									"pm.test(\"Frequent words is an array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.frequent_words).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Word count is a number\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.word_count).to.be.a('number');",
+									"    pm.expect(jsonData.word_count).to.be.at.least(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "{{test_image_scientific}}"
+								},
+								{
+									"key": "min_words",
+									"value": "2000",
+									"type": "text"
+								},
+								{
+									"key": "min_paragraphs",
+									"value": "8",
+									"type": "text"
+								},
+								{
+									"key": "language",
+									"value": "en",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/classify",
+							"host": ["{{base_url}}"],
+							"path": ["classify"]
+						}
+					}
+				},
+				{
+					"name": "[NEGATIVE] POST /classify - No File",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// NEGATIVE PATH: Sem arquivo deve retornar erro",
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response has error message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{base_url}}/classify",
+							"host": ["{{base_url}}"],
+							"path": ["classify"]
+						}
+					}
+				},
+				{
+					"name": "[NEGATIVE] POST /classify - Invalid Extension",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// NEGATIVE PATH: Extensão inválida deve retornar erro",
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error mentions file extension\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error || jsonData.message).to.include('tif');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "{{test_image_invalid}}"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/classify",
+							"host": ["{{base_url}}"],
+							"path": ["classify"]
+						}
+					}
+				},
+				{
+					"name": "[NEGATIVE] GET /classify - Wrong Method",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// NEGATIVE PATH: Método GET deve retornar 405",
+									"pm.test(\"Status code is 405\", function () {",
+									"    pm.response.to.have.status(405);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/classify",
+							"host": ["{{base_url}}"],
+							"path": ["classify"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Async Classification",
+			"item": [
+				{
+					"name": "[HAPPY] POST /classify/async",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// HAPPY PATH: Submissão assíncrona deve retornar task_id",
+									"pm.test(\"Status code is 200 or 503\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test(\"Response has task_id\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property('task_id');",
+									"        pm.environment.set('task_id', jsonData.task_id);",
+									"    });",
+									"} else {",
+									"    pm.test(\"503 indicates async not available\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property('error');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "{{test_image_scientific}}"
+								},
+								{
+									"key": "min_words",
+									"value": "2000",
+									"type": "text"
+								},
+								{
+									"key": "min_paragraphs",
+									"value": "8",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/classify/async",
+							"host": ["{{base_url}}"],
+							"path": ["classify", "async"]
+						}
+					}
+				},
+				{
+					"name": "[HAPPY] GET /task/{task_id}",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// HAPPY PATH: Status da task deve retornar informações",
+									"pm.test(\"Status code is 200, 404, or 503\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 404, 503]);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test(\"Response has state\", function () {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property('state');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/task/{{task_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["task", "{{task_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Feedback",
+			"item": [
+				{
+					"name": "[HAPPY] POST /feedback - Correct",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// HAPPY PATH: Feedback correto deve ser aceito",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response indicates success\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"image_name\": \"test_advertisement.tif\",\n    \"is_correct\": true,\n    \"predicted_class\": \"advertisement\",\n    \"actual_class\": \"advertisement\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/feedback",
+							"host": ["{{base_url}}"],
+							"path": ["feedback"]
+						}
+					}
+				},
+				{
+					"name": "[HAPPY] POST /feedback - Incorrect",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// HAPPY PATH: Feedback incorreto deve ser aceito",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response indicates success\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.eql(true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"image_name\": \"test_scientific.tif\",\n    \"is_correct\": false,\n    \"predicted_class\": \"advertisement\",\n    \"actual_class\": \"scientific_article\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/feedback",
+							"host": ["{{base_url}}"],
+							"path": ["feedback"]
+						}
+					}
+				},
+				{
+					"name": "[HAPPY] GET /feedback/stats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// HAPPY PATH: Stats de feedback deve retornar dados",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has total_feedbacks or message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.satisfy(function (obj) {",
+									"        return obj.hasOwnProperty('total_feedbacks') || obj.hasOwnProperty('message');",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/feedback/stats",
+							"host": ["{{base_url}}"],
+							"path": ["feedback", "stats"]
+						}
+					}
+				},
+				{
+					"name": "[NEGATIVE] POST /feedback - Missing Fields",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// NEGATIVE PATH: Campos faltando deve retornar erro",
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response has error message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"image_name\": \"test.tif\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/feedback",
+							"host": ["{{base_url}}"],
+							"path": ["feedback"]
+						}
+					}
+				},
+				{
+					"name": "[NEGATIVE] POST /feedback - Invalid JSON",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// NEGATIVE PATH: JSON inválido deve retornar erro",
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "invalid json {"
+						},
+						"url": {
+							"raw": "{{base_url}}/feedback",
+							"host": ["{{base_url}}"],
+							"path": ["feedback"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Pre-request script global",
+					"console.log('🧪 Running test on:', pm.request.url.toString());"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Post-request script global",
+					"pm.test(\"Response is JSON or HTML\", function () {",
+					"    pm.expect(pm.response.headers.get('Content-Type')).to.satisfy(function (contentType) {",
+					"        return contentType.includes('application/json') || contentType.includes('text/html');",
+					"    });",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "test_image_advertisement",
+			"value": "test_images/advertisement.tif",
+			"type": "string"
+		},
+		{
+			"key": "test_image_scientific",
+			"value": "test_images/scientific.tif",
+			"type": "string"
+		},
+		{
+			"key": "test_image_invalid",
+			"value": "test_images/invalid.jpg",
+			"type": "string"
+		},
+		{
+			"key": "task_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

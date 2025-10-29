@@ -1,0 +1,80 @@
+# Pre-commit hooks para Document Classifier
+# Instalar: pip install pre-commit
+# Ativar: pre-commit install
+# Rodar manual: pre-commit run --all-files
+
+repos:
+  # Formatação de código
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        name: 🎨 Black (formatação)
+        language_version: python3.10
+        args: [--line-length=120]
+  
+  # Ordenação de imports
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: 📦 isort (imports)
+        args: [--profile=black, --line-length=120]
+  
+  # Linting
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        name: 🔍 Flake8 (linting)
+        args: [--max-line-length=120, --extend-ignore=E203,W503]
+  
+  # Verificações básicas
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+        name: ✂️ Remove trailing whitespace
+      - id: end-of-file-fixer
+        name: 📝 Fix end of files
+      - id: check-yaml
+        name: ✅ Check YAML
+      - id: check-json
+        name: ✅ Check JSON
+      - id: check-added-large-files
+        name: 📏 Check large files
+        args: [--maxkb=5000]
+      - id: check-merge-conflict
+        name: 🔀 Check merge conflicts
+      - id: debug-statements
+        name: 🐛 Check debug statements
+  
+  # TESTES UNITÁRIOS (CRÍTICO - BLOQUEIA COMMIT SE FALHAR)
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: 🧪 Pytest (testes unitários)
+        entry: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        args:
+          [
+            "tests/",
+            "-v",
+            "--tb=short",
+            "--maxfail=1",
+            "-x",
+            "-q"
+          ]
+        stages: [commit]
+  
+  # Análise de segurança
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        name: 🔒 Bandit (segurança)
+        args: [-r, ., -ll, --skip=B101]
+        exclude: ^tests/
+

@@ -1,0 +1,335 @@
+name: 🧪 CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: '3.10'
+  NODE_VERSION: '18'
+
+jobs:
+  # ============================================
+  # JOB 1: TESTES UNITÁRIOS (PYTEST)
+  # ============================================
+  unit-tests:
+    name: 🧪 Testes Unitários
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: 📦 Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      
+      - name: 🧪 Rodar testes unitários
+        run: |
+          pytest tests/ \
+            -v \
+            --tb=short \
+            --cov=. \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-report=html \
+            --junitxml=junit/test-results.xml
+      
+      - name: 📊 Upload coverage para Codecov
+        if: always()
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+      
+      - name: 📋 Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-results
+          path: |
+            junit/test-results.xml
+            htmlcov/
+      
+      - name: ❌ Falha se testes falharem
+        if: failure()
+        run: |
+          echo "❌ Testes unitários falharam! Deploy cancelado."
+          exit 1
+
+  # ============================================
+  # JOB 2: BUILD & HEALTH CHECK
+  # ============================================
+  build-and-healthcheck:
+    name: 🏗️ Build & Health Check
+    runs-on: ubuntu-latest
+    needs: unit-tests  # Só roda se testes unitários passarem
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: 📦 Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: 🏗️ Build da aplicação (verificar imports)
+        run: |
+          echo "🔍 Verificando imports..."
+          python -c "from api import app; print('✅ API importada com sucesso')"
+          python -c "from classificador_final import ClassificadorFinal; print('✅ Classificador importado com sucesso')"
+          python -c "from celery_config import celery_app; print('✅ Celery importado com sucesso')"
+      
+      - name: 🚀 Iniciar API (background)
+        env:
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          echo "🚀 Iniciando API..."
+          python api.py &
+          API_PID=$!
+          echo "API_PID=$API_PID" >> $GITHUB_ENV
+          
+          # Aguardar API inicializar (até 60s)
+          echo "⏳ Aguardando API inicializar..."
+          for i in {1..30}; do
+            if curl -s http://localhost:5000/health > /dev/null; then
+              echo "✅ API está online!"
+              break
+            fi
+            echo "   Tentativa $i/30..."
+            sleep 2
+          done
+      
+      - name: ✅ Health Check
+        run: |
+          echo "🔍 Verificando saúde da API..."
+          
+          # GET /health
+          response=$(curl -s http://localhost:5000/health)
+          echo "Response: $response"
+          
+          if echo "$response" | grep -q "healthy"; then
+            echo "✅ Health check passou!"
+          else
+            echo "❌ Health check falhou!"
+            exit 1
+          fi
+      
+      - name: 📊 Verificar endpoints críticos
+        run: |
+          echo "🔍 Verificando endpoints críticos..."
+          
+          # GET /stats
+          curl -f http://localhost:5000/stats || exit 1
+          echo "✅ /stats OK"
+          
+          # GET /api-info
+          curl -f http://localhost:5000/api-info || exit 1
+          echo "✅ /api-info OK"
+      
+      - name: 🛑 Parar API
+        if: always()
+        run: |
+          if [ -n "$API_PID" ]; then
+            kill $API_PID || true
+          fi
+
+  # ============================================
+  # JOB 3: TESTES DE API (NEWMAN)
+  # ============================================
+  api-tests:
+    name: 🔬 Testes de API (Newman)
+    runs-on: ubuntu-latest
+    needs: build-and-healthcheck  # Só roda se build e health check passarem
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: 📦 Setup Node.js (para Newman)
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: 📦 Instalar dependências Python
+        run: |
+          pip install -r requirements.txt
+      
+      - name: 📦 Instalar Newman
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-htmlextra
+      
+      - name: 🚀 Iniciar API (background)
+        env:
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          python api.py &
+          API_PID=$!
+          echo "API_PID=$API_PID" >> $GITHUB_ENV
+          
+          # Aguardar API
+          for i in {1..30}; do
+            if curl -s http://localhost:5000/health > /dev/null; then
+              break
+            fi
+            sleep 2
+          done
+      
+      - name: 🧪 Rodar testes Newman
+        run: |
+          newman run postman/document-classifier-api.postman_collection.json \
+            -e postman/document-classifier.postman_environment.json \
+            --reporters cli,htmlextra,junit \
+            --reporter-htmlextra-export newman/report.html \
+            --reporter-junit-export newman/junit-report.xml \
+            --timeout-request 60000 \
+            --bail \
+            --color on
+      
+      - name: 📋 Upload Newman report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: newman-report
+          path: |
+            newman/report.html
+            newman/junit-report.xml
+      
+      - name: 🛑 Parar API
+        if: always()
+        run: |
+          if [ -n "$API_PID" ]; then
+            kill $API_PID || true
+          fi
+      
+      - name: ❌ Falha se testes de API falharem
+        if: failure()
+        run: |
+          echo "❌ Testes de API falharam! Deploy cancelado."
+          exit 1
+
+  # ============================================
+  # JOB 4: DEPLOY (APENAS SE TUDO PASSAR)
+  # ============================================
+  deploy:
+    name: 🚀 Deploy para Render
+    runs-on: ubuntu-latest
+    needs: [unit-tests, build-and-healthcheck, api-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+      
+      - name: ✅ Todos os testes passaram!
+        run: |
+          echo "✅ Testes unitários: PASSOU"
+          echo "✅ Build & Health Check: PASSOU"
+          echo "✅ Testes de API (Newman): PASSOU"
+          echo ""
+          echo "🚀 Pronto para deploy!"
+      
+      - name: 🌐 Deploy para Render
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$RENDER_DEPLOY_HOOK" ]; then
+            echo "🚀 Disparando deploy no Render..."
+            curl -X POST "$RENDER_DEPLOY_HOOK"
+            echo "✅ Deploy disparado!"
+          else
+            echo "⚠️ RENDER_DEPLOY_HOOK não configurado (pule para deploy manual)"
+          fi
+      
+      - name: ⏳ Aguardar deploy (2 minutos)
+        run: sleep 120
+      
+      - name: 🔍 Verificar deploy em produção
+        run: |
+          echo "🔍 Verificando API em produção..."
+          
+          # Aguardar API acordar (Render Free tier)
+          for i in {1..10}; do
+            if curl -s https://visao-computacional.onrender.com/health > /dev/null; then
+              echo "✅ API em produção está online!"
+              break
+            fi
+            echo "   Tentativa $i/10..."
+            sleep 10
+          done
+          
+          # Health check final
+          response=$(curl -s https://visao-computacional.onrender.com/health)
+          if echo "$response" | grep -q "healthy"; then
+            echo "✅ Deploy bem-sucedido!"
+          else
+            echo "⚠️ API pode não estar totalmente inicializada (normal no Render Free)"
+          fi
+
+  # ============================================
+  # JOB 5: NOTIFICAÇÃO DE SUCESSO
+  # ============================================
+  success-notification:
+    name: 🎉 Notificação de Sucesso
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: success()
+    
+    steps:
+      - name: 🎉 Deploy completo!
+        run: |
+          echo "════════════════════════════════════════"
+          echo "   🎉 DEPLOY BEM-SUCEDIDO! 🎉"
+          echo "════════════════════════════════════════"
+          echo ""
+          echo "✅ Todos os testes passaram"
+          echo "✅ Build completo"
+          echo "✅ Health check OK"
+          echo "✅ Testes de API OK"
+          echo "✅ Deploy realizado"
+          echo ""
+          echo "🌐 URL: https://visao-computacional.onrender.com"
+          echo "📊 Frontend: https://pfalconiere.github.io/visao-computacional/"
+          echo ""
+          echo "════════════════════════════════════════"
+

@@ -8,6 +8,8 @@ sys.stdout = sys.stderr  # Força prints irem para stderr (que o Flask mostra)
 
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+from flasgger import Swagger, swag_from
+from swagger_docs import *
 from classificador_final import ClassificadorFinal
 from pathlib import Path
 import tempfile
@@ -57,6 +59,58 @@ CORS(app, resources={
         "supports_credentials": True
     }
 })
+
+# Configuração do Swagger
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": 'apispec',
+            "route": '/apispec.json',
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/api/docs"
+}
+
+swagger_template = {
+    "swagger": "2.0",
+    "info": {
+        "title": "Document Classifier API",
+        "description": "API REST para classificação de documentos RVL-CDIP (Advertisement vs Scientific Article) com OCR, análise de texto e processamento assíncrono",
+        "version": "3.0.0",
+        "contact": {
+            "name": "Document Classifier Team",
+            "url": "https://github.com/pfalconiere/visao-computacional"
+        }
+    },
+    "host": "visao-computacional.onrender.com",
+    "basePath": "/",
+    "schemes": ["https", "http"],
+    "tags": [
+        {
+            "name": "Health",
+            "description": "Endpoints de status e saúde da API"
+        },
+        {
+            "name": "Classification",
+            "description": "Endpoints de classificação de documentos (síncrono e assíncrono)"
+        },
+        {
+            "name": "Feedback",
+            "description": "Endpoints de feedback do usuário para retreinamento"
+        },
+        {
+            "name": "Statistics",
+            "description": "Endpoints de estatísticas do modelo"
+        }
+    ]
+}
+
+swagger = Swagger(app, config=swagger_config, template=swagger_template)
 
 # Inicializar classificador
 print("🔄 Carregando classificador...")
@@ -115,6 +169,7 @@ def favicon():
         return '', 404
 
 @app.route('/api-info', methods=['GET'])
+@swag_from(home_docs)
 def api_info():
     """Informações da API"""
     return jsonify({
@@ -132,6 +187,7 @@ def api_info():
     })
 
 @app.route('/health', methods=['GET'])
+@swag_from(health_docs)
 def health():
     """Verifica se a API está funcionando"""
     return jsonify({
@@ -140,6 +196,7 @@ def health():
     })
 
 @app.route('/stats', methods=['GET'])
+@swag_from(stats_docs)
 def stats():
     """Retorna estatísticas do modelo"""
     return jsonify({
@@ -165,6 +222,7 @@ def stats():
     })
 
 @app.route('/classify', methods=['POST'])
+@swag_from(classify_docs)
 def classify():
     """Classifica uma imagem"""
     
@@ -306,6 +364,7 @@ def classify():
         }), 500
 
 @app.route('/classify/async', methods=['POST'])
+@swag_from(classify_async_docs)
 def classify_async():
     """
     Endpoint ASSÍNCRONO para classificação de documentos
@@ -379,6 +438,7 @@ def classify_async():
 
 
 @app.route('/task/<task_id>', methods=['GET'])
+@swag_from(task_status_docs)
 def get_task_status(task_id):
     """
     Consultar status de uma tarefa assíncrona
@@ -437,6 +497,7 @@ def get_task_status(task_id):
 
 
 @app.route('/feedback', methods=['POST'])
+@swag_from(feedback_post_docs)
 def feedback():
     """
     Endpoint para receber feedback do usuário sobre a classificação
@@ -490,6 +551,7 @@ def feedback():
         }), 500
 
 @app.route('/feedback/stats', methods=['GET'])
+@swag_from(feedback_stats_docs)
 def feedback_stats():
     """
     Retorna estatísticas dos feedbacks coletados

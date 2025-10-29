@@ -57,6 +57,12 @@ temp_image_*.tif
 .pytest_cache/
 .coverage
 htmlcov/
+coverage.xml
+junit/
+newman/
+.tox/
+*.cover
+.hypothesis/
 
 # OS
 Thumbs.db
@@ -90,3 +96,10 @@ docs/
 *.pid
 feedback_data.csv
 .cache_ocr/
+
+# Test images (podem ser grandes)
+test_images/*.tif
+test_images/*.tiff
+test_images/*.jpg
+test_images/*.jpeg
+test_images/*.png

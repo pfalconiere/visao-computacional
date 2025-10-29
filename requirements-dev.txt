@@ -1,0 +1,25 @@
+# Dependências de desenvolvimento e testes
+
+# Dependências principais (produção)
+-r requirements.txt
+
+# Testes
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-timeout>=2.1.0
+pytest-mock>=3.11.1
+pytest-asyncio>=0.21.1
+
+# Code quality
+black>=23.7.0
+flake8>=6.1.0
+mypy>=1.5.0
+pylint>=2.17.5
+isort>=5.12.0
+
+# Pre-commit hooks
+pre-commit>=3.3.3
+
+# API testing
+requests>=2.31.0
+
