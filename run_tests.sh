@@ -23,7 +23,11 @@ echo ""
 if ! command -v pytest &> /dev/null; then
     echo -e "${RED}❌ pytest não encontrado!${NC}"
     echo -e "${YELLOW}Instalando dependências...${NC}"
-    pip install -r requirements-dev.txt
+    python3 -m pip install -r requirements-dev.txt --quiet || {
+        echo -e "${RED}❌ Falha ao instalar dependências!${NC}"
+        echo -e "${YELLOW}Execute manualmente: python3 -m pip install -r requirements-dev.txt${NC}"
+        exit 1
+    }
 fi
 
 # Modo de teste (default: all)
